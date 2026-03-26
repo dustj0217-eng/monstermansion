@@ -3,7 +3,7 @@
 // 화면5: 팔로우 / SNS 링크
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-import styles from './ScreenFollow.module.css';
+import styles from './Screenfollow.module.css';
 
 // ── SNS 링크 데이터 ──
 // href에 실제 URL 입력하세요

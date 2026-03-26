@@ -3,7 +3,7 @@
 // 화면4: 맨션 지도 (준비 중)
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-import TopBar from './TopBar';
+import TopBar from './Topbar';
 
 export default function ScreenMap({ isActive, onBack }) {
   return (

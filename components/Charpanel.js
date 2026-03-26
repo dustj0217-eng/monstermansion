@@ -8,7 +8,7 @@
 'use client'; // useRef, 터치 이벤트 등 클라이언트 전용 훅 사용
 
 import { useRef, useEffect } from 'react';
-import styles from './CharPanel.module.css';
+import styles from './Charpanel.module.css';
 
 // ── 캐릭터 데이터 ──
 // 캐릭터 추가 시 이 객체에 추가하세요

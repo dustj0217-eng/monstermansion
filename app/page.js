@@ -20,12 +20,12 @@
 import { useState, useCallback } from 'react';
 
 // 화면 컴포넌트들
-import ScreenMain     from '../components/ScreenMain';
-import ScreenChars    from '../components/ScreenChars';
-import ScreenEpisodes from '../components/ScreenEpisodes';
-import ScreenMap      from '../components/ScreenMap';
-import ScreenFollow   from '../components/ScreenFollow';
-import CharPanel      from '../components/CharPanel';
+import ScreenMain     from '../components/Screenmain';
+import ScreenChars    from '../components/Screenchars';
+import ScreenEpisodes from '../components/Screenepisodes';
+import ScreenMap      from '../components/Screenmap';
+import ScreenFollow   from '../components/Screenfollow';
+import CharPanel      from '../components/Charpanel';
 
 // ── 화면 ID 상수 ──
 // 오타 방지를 위해 문자열 대신 상수로 관리

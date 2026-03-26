@@ -1,7 +1,7 @@
 // components/ScreenChars.js
 
 import { useState, useEffect } from 'react';
-import styles from './ScreenChars.module.css';
+import styles from './Screenchars.module.css';
 
 const CHARACTERS = [
   {

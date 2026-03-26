@@ -3,8 +3,8 @@
 // 화면3: 에피소드 목록 (2열 그리드)
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-import TopBar from './TopBar';
-import styles from './ScreenEpisodes.module.css';
+import TopBar from './Topbar';
+import styles from './Screenepisodes.module.css';
 
 // ── 에피소드 데이터 ──
 // 에피소드 추가 시 이 배열에만 추가하면 됩니다

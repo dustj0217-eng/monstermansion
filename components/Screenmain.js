@@ -5,8 +5,8 @@
 // - 4개의 노드(버튼)로 각 섹션 진입
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-import TopBar from './TopBar';
-import styles from './ScreenMain.module.css';
+import TopBar from './Topbar';
+import styles from './Screenmain.module.css';
 
 // ── 노드 버튼 데이터 ──
 // 추후 노드 추가/수정 시 이 배열만 편집하면 됩니다
