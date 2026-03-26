@@ -1,0 +1,77 @@
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   ScreenMain.module.css
+   CSS Modules: 이 파일의 클래스명은 자동으로
+   고유한 해시가 붙어서 전역 충돌 없음
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+/* ── 배경 이미지 영역 ── */
+.bg {
+  position: absolute;
+  inset: 0;
+  background: var(--bg);        /* 배경 이미지 교체 시:
+                                   background-image: url('/images/mansion-exterior.jpg');
+                                   background-size: cover;
+                                   background-position: center; */
+  z-index: 0;
+}
+
+/* ── 배경 힌트 텍스트 (임시) ── */
+.bgHint {
+  position: absolute;
+  bottom: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  color: var(--dim);
+  white-space: nowrap;
+  z-index: 2;
+}
+
+/* ── 노드 버튼 컨테이너 ── */
+.node {
+  position: absolute;           /* 배경 위에 자유롭게 배치 */
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  background: none;
+  border: none;
+  color: var(--text);
+  font-family: inherit;
+}
+
+/* ── 원형 버튼 ── */
+.nodeCircle {
+  width: 62px;
+  height: 62px;
+  border-radius: 50%;
+  border: 1.5px solid var(--border);
+  background: var(--surface);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  letter-spacing: 0.05em;
+  color: var(--dim);
+  text-align: center;
+  line-height: 1.5;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+/* 호버/탭 시 강조 */
+.node:hover .nodeCircle,
+.node:active .nodeCircle {
+  border-color: var(--text);
+  background: #1c1c26;
+}
+
+/* ── 버튼 아래 텍스트 레이블 ── */
+.nodeLabel {
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  color: var(--text);
+}
