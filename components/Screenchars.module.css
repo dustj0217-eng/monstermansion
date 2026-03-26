@@ -1,66 +1,188 @@
 /* ScreenChars.module.css */
 
-.bg {
-  position: absolute;
-  inset: 0;
-  background: var(--bg);
-  /* 배경 이미지 교체 시:
-     background-image: url('/images/mansion-interior.jpg');
-     background-size: cover;
-     background-position: center bottom; */
-  z-index: 0;
+.sceneWrapper {
+  position: relative;
+  width: 100%;
+  /* max-width 제거 — 가로 전체를 꽉 채움 */
+  height: calc(100vh - 80px);
+  margin-top: 0px;
+  overflow: hidden;
 }
 
-.pageHint {
-  position: absolute;
-  bottom: 40px;
-  left: 50%;
-  transform: translateX(-50%);
-  font-size: 10px;
-  letter-spacing: 0.1em;
-  color: var(--dim);
-  white-space: nowrap;
-  z-index: 2;
+.sceneImg {
+  width: 100%;
+  height: 100%;
+  /* contain → cover: 가로 여백 없이 꽉 채움 */
+  object-fit: cover;
+  /* 이미지 중간을 기준점으로 — 세로가 긴 이미지이므로 */
+  object-position: center center;
+  display: block;
 }
 
-/* ── 캐릭터 스탠딩 버튼 ── */
-.charStanding {
+/* ── 탭존 ── */
+.tapZone {
   position: absolute;
-  z-index: 20;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+  background: transparent;
+  border: none;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── 가운데 점 ── */
+.dot {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.7);
+  z-index: 2;
+  transition: background 0.15s ease;
+}
+
+/* ── 파동 원 ── */
+.ripple {
+  position: absolute;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(255, 255, 255, 0.55);
+  animation: rippleAnim 2.4s ease-out infinite;
+}
+
+.ripple2 {
+  animation-delay: 0.8s;
+}
+
+.ripple3 {
+  animation-delay: 1.6s;
+}
+
+@keyframes rippleAnim {
+  0%   { transform: scale(0.6); opacity: 0.7; }
+  100% { transform: scale(2.8); opacity: 0; }
+}
+
+/* 활성화됐을 때 점 색상 변화 */
+.tapActive .dot {
+  background: rgba(255, 255, 255, 1);
+}
+
+/* ── 말풍선 ── */
+.bubble {
+  position: absolute;
+  width: 68%;
+  /* 화면 밖 넘침 방지 */
+  max-width: calc(100% - 24px);
+  background: #13131a;
+  border: 1px solid #2a2a35;
+  border-radius: 14px;
+  padding: 16px 16px 18px;
+  z-index: 50;
+  animation: bubblePop 0.18s ease-out;
+  /* 좌측 기준 넘침 방지 */
+  box-sizing: border-box;
+}
+
+@keyframes bubblePop {
+  0%   { transform: scale(0.88); opacity: 0; }
+  100% { transform: scale(1);    opacity: 1; }
+}
+
+/* 말풍선 꼬리 — 아래쪽 */
+.arrow-bottom::after {
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  left: 24px;
+  width: 14px;
+  height: 14px;
+  background: #13131a;
+  border-right: 1px solid #2a2a35;
+  border-bottom: 1px solid #2a2a35;
+  transform: rotate(45deg);
+}
+
+/* 말풍선 꼬리 — 위쪽 */
+.arrow-top::before {
+  content: '';
+  position: absolute;
+  top: -8px;
+  left: 24px;
+  width: 14px;
+  height: 14px;
+  background: #13131a;
+  border-left: 1px solid #2a2a35;
+  border-top: 1px solid #2a2a35;
+  transform: rotate(45deg);
+}
+
+/* 닫기 버튼 */
+.bubbleClose {
+  position: absolute;
+  top: 10px;
+  right: 12px;
   background: none;
   border: none;
-  font-family: inherit;
-  gap: 0;
+  color: #55535a;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 2px 4px;
+  line-height: 1;
+  transition: color 0.15s ease;
+}
+.bubbleClose:hover {
+  color: #a0a0a8;
 }
 
-/* ── 이미지 영역 (플레이스홀더 스타일) ── */
-.charStandingImg {
-  background: #1c1c26;
-  border: 1px solid var(--border);
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  font-size: 9px;
-  letter-spacing: 0.05em;
-  text-align: center;
-  line-height: 1.6;
-  padding-bottom: 8px;
-  transition: opacity 0.2s;
+/* 태그 */
+.bubbleTag {
+  font-family: 'Cinzel', serif;
+  font-size: 8px;
+  letter-spacing: 0.18em;
+  margin-bottom: 4px;
+}
+.ghosty { color: #d4d0e0; }
+.dra    { color: #c0392b; }
+.may    { color: #7c5cbf; }
+
+/* 이름 */
+.bubbleName {
+  font-family: 'Noto Serif KR', serif;
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  margin-bottom: 8px;
+  color: #f0ede8;
 }
 
-.charStanding:hover .charStandingImg,
-.charStanding:active .charStandingImg {
-  opacity: 0.8;
-}
-
-/* ── 캐릭터 이름 ── */
-.charStandingName {
-  margin-top: 8px;
+/* 설명 */
+.bubbleDesc {
   font-size: 11px;
-  letter-spacing: 0.1em;
+  line-height: 1.8;
+  color: #888580;
+  margin-bottom: 10px;
+}
+
+/* 낮/밤 */
+.dnPair {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.dnLine {
+  display: flex;
+  gap: 8px;
+  font-size: 11px;
+}
+.dnK {
+  color: #55535a;
+  min-width: 16px;
+}
+.dnV {
+  color: #888580;
+  line-height: 1.5;
 }
