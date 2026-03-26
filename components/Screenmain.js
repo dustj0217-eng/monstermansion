@@ -5,7 +5,7 @@
 // - 4개의 노드(버튼)로 각 섹션 진입
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-import TopBar from '/TopBar';
+import TopBar from './TopBar';
 import styles from './ScreenMain.module.css';
 
 // ── 노드 버튼 데이터 ──
