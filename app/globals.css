@@ -54,7 +54,6 @@
 /* ── Base ── */
 html, body {
   height: 100%;
-  overflow: hidden; /* 모바일 앱 느낌 — 스크롤은 각 페이지에서 */
   background: var(--color-bg-deep);
 }
 

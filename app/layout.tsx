@@ -30,9 +30,8 @@ export default function RootLayout({
             position: "relative",
             width: "100%",
             maxWidth: "var(--mobile-max-width)",
-            height: "100dvh",
+            minHeight: "100dvh",
             margin: "0 auto",
-            overflow: "hidden",
             background: "var(--color-bg)",
           }}
         >
