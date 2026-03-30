@@ -3,9 +3,18 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 
-type PageId = "301" | "map" | "sns" | "about" | "door" | "story" | "shop" | null;
+// ─────────────────────────────────────────────
+// 타입
+// ─────────────────────────────────────────────
+type Phase = "day" | "closing" | "opening" | "night";
 
-const PAGES: Record<string, { title: string; emoji: string; content: React.ReactNode }> = {
+// PageId는 PAGES 키에서 자동 추론 — 새 페이지 추가 시 PAGES에만 추가하면 됩니다
+type PageId = keyof typeof PAGES;
+
+// ─────────────────────────────────────────────
+// 페이지 데이터 — 페이지 추가 시 여기에만 추가
+// ─────────────────────────────────────────────
+const PAGES = {
   "301": {
     title: "301호",
     emoji: "👾",
@@ -45,12 +54,12 @@ const PAGES: Record<string, { title: string; emoji: string; content: React.React
         <p className="page-desc">맨션이 위치한 이 도시에는 몬스터들만 삽니다. 해가 지면 가게들이 문을 열고, 해가 뜨면 다들 집으로 들어가죠.</p>
         <div className="map-grid">
           {[
-            { emoji: "☕", name: "뱀파이어 카페", desc: "밤 12시 오픈" },
-            { emoji: "🍞", name: "좀비 빵집", desc: "뇌빵 전문점" },
-            { emoji: "🧪", name: "마녀의 약재상", desc: "24시간 영업" },
-            { emoji: "🏚", name: "유령의 집", desc: "관광 명소" },
-            { emoji: "🎪", name: "몬스터 서커스", desc: "매월 보름" },
-            { emoji: "🌙", name: "달빛 공원", desc: "늑대 모임 장소" },
+            { emoji: "☕", name: "뱀파이어 카페",  desc: "밤 12시 오픈" },
+            { emoji: "🍞", name: "좀비 빵집",      desc: "뇌빵 전문점" },
+            { emoji: "🧪", name: "마녀의 약재상",  desc: "24시간 영업" },
+            { emoji: "🏚", name: "유령의 집",      desc: "관광 명소" },
+            { emoji: "🎪", name: "몬스터 서커스",  desc: "매월 보름" },
+            { emoji: "🌙", name: "달빛 공원",      desc: "늑대 모임 장소" },
           ].map((p) => (
             <div key={p.name} className="map-card">
               <span className="map-emoji">{p.emoji}</span>
@@ -72,9 +81,9 @@ const PAGES: Record<string, { title: string; emoji: string; content: React.React
         <div className="sns-list">
           {[
             { icon: "📸", name: "Instagram", handle: "@monstermansion", color: "rgba(255,110,180,0.15)" },
-            { icon: "🎵", name: "TikTok", handle: "@monstermansion", color: "rgba(167,244,196,0.15)" },
-            { icon: "🐦", name: "X / Twitter", handle: "@monstermansion", color: "rgba(167,212,245,0.15)" },
-            { icon: "▶️", name: "YouTube", handle: "몬스터맨션", color: "rgba(245,110,110,0.15)" },
+            { icon: "🎵", name: "TikTok",    handle: "@monstermansion", color: "rgba(167,244,196,0.15)" },
+            { icon: "🐦", name: "X / Twitter",handle: "@monstermansion",color: "rgba(167,212,245,0.15)" },
+            { icon: "▶️", name: "YouTube",   handle: "몬스터맨션",       color: "rgba(245,110,110,0.15)" },
           ].map((s) => (
             <div key={s.name} className="sns-item" style={{ background: s.color }}>
               <span style={{ fontSize: 24 }}>{s.icon}</span>
@@ -136,9 +145,9 @@ const PAGES: Record<string, { title: string; emoji: string; content: React.React
         <h2>몬스터맨션 에피소드</h2>
         <p className="page-desc">매주 업데이트되는 에피소드. 평범하지 않은 주민들의 아주 평범한 일상.</p>
         {[
-          { ep: "EP.01", title: "첫 번째 보름달", desc: "울프맨이 이사 온 날, 맨션 전체가 피아노 소리로 가득 찼다." },
-          { ep: "EP.02", title: "과일주스 대란", desc: "드라큘라 백작의 냉장고가 고장났다. 긴급 주민 회의 소집." },
-          { ep: "EP.03", title: "마녀의 실수", desc: "헤이젤의 약초 실험이 폭발하며 건물 전체가 보라색으로 물들었다." },
+          { ep: "EP.01", title: "첫 번째 보름달",  desc: "울프맨이 이사 온 날, 맨션 전체가 피아노 소리로 가득 찼다." },
+          { ep: "EP.02", title: "과일주스 대란",    desc: "드라큘라 백작의 냉장고가 고장났다. 긴급 주민 회의 소집." },
+          { ep: "EP.03", title: "마녀의 실수",      desc: "헤이젤의 약초 실험이 폭발하며 건물 전체가 보라색으로 물들었다." },
         ].map((ep) => (
           <div key={ep.ep} className="ep-card">
             <span className="ep-num">{ep.ep}</span>
@@ -175,46 +184,48 @@ const PAGES: Record<string, { title: string; emoji: string; content: React.React
       </div>
     ),
   },
-};
+} as const;
 
-const MENU_ITEMS = [
-  { id: "characters" as const, emoji: "👾", label: "캐릭터", href: "/characters" },
-  { id: "story" as const,      emoji: "📖", label: "스토리" },
-  { id: "shop" as const,       emoji: "🛍", label: "굿즈샵" },
-  { id: "sns" as const,        emoji: "🐦", label: "SNS" },
-  { id: "about" as const,      emoji: "ℹ️",  label: "소개" },
+// ─────────────────────────────────────────────
+// 핫스팟 — 추가 시 SPOTS 배열에만 추가
+// ─────────────────────────────────────────────
+const SPOTS: { id: PageId; emoji: string; label: string; style: React.CSSProperties }[] = [
+  { id: "301",   emoji: "👾", label: "301호 캐릭터", style: { left: "38%", top: "42%" } },
+  { id: "map",   emoji: "🗺", label: "도시 지도",    style: { left: "13%", top: "78%" } },
+  { id: "sns",   emoji: "🐦", label: "SNS 팔로우",   style: { right: "18%", top: "83%" } },
+  { id: "about", emoji: "💡", label: "맨션 소개",    style: { left: "14%", top: "68%" } },
+  { id: "door",  emoji: "🚪", label: "맨션 입장",    style: { left: "42%", top: "76%" } },
 ];
 
-const SPOTS = [
-  { id: "301" as PageId,  emoji: "👾", label: "301호 캐릭터", style: { left: "38%", top: "42%" } },
-  { id: "map" as PageId,  emoji: "🗺", label: "도시 지도",    style: { left: "13%", top: "78%" } },
-  { id: "sns" as PageId,  emoji: "🐦", label: "SNS 팔로우",   style: { right: "18%", top: "83%" } },
-  { id: "about" as PageId,emoji: "💡", label: "맨션 소개",    style: { left: "14%", top: "68%" } },
-  { id: "door" as PageId, emoji: "🚪", label: "맨션 입장",    style: { left: "42%", top: "76%" } },
+// ─────────────────────────────────────────────
+// 메뉴 아이템 — 추가 시 MENU_ITEMS 배열에만 추가
+// href 있으면 Link, 없으면 페이지 오버레이
+// ─────────────────────────────────────────────
+const MENU_ITEMS: { id: PageId | "characters"; emoji: string; label: string; href?: string }[] = [
+  { id: "characters", emoji: "👾", label: "캐릭터", href: "/characters" },
+  { id: "story",      emoji: "📖", label: "스토리" },
+  { id: "shop",       emoji: "🛍", label: "굿즈샵" },
+  { id: "sns",        emoji: "🐦", label: "SNS" },
+  { id: "about",      emoji: "ℹ️",  label: "소개" },
 ];
 
-// curtain phases:
-// "day"      → 낮 배경, UI 표시
-// "closing"  → 커튼 내려오는 중 (UI 숨김)
-// "opening"  → 밤 배경으로 바뀐 후 커튼 올라가는 중
-// "night"    → 완전히 밤, UI 다시 표시
-type Phase = "day" | "closing" | "opening" | "night";
-
+// ─────────────────────────────────────────────
+// 메인 컴포넌트
+// ─────────────────────────────────────────────
 export default function MonsterMansionPage() {
-  const [phase, setPhase] = useState<Phase>("day");
-  const [currentPage, setCurrentPage] = useState<PageId>(null);
-  const [menuOpen, setMenuOpen] = useState(false);
+  const [phase, setPhase]           = useState<Phase>("day");
+  const [currentPage, setCurrentPage] = useState<PageId | null>(null);
+  const [menuOpen, setMenuOpen]     = useState(false);
 
-  const uiVisible = phase === "day" || phase === "night";
-  const isNight   = phase === "opening" || phase === "night";
+  // 커튼이 완전히 올라간 night 단계에서만 UI 표시
+  const showUI = phase === "night";
 
+  // 낮 → 밤 전환 시퀀스
+  // day(2s 대기) → closing(커튼 내려옴 0.7s) → opening(배경 교체 + 커튼 올라감 0.7s) → night
   useEffect(() => {
-    // 2s 뒤 커튼 내려오기 시작 (0.7s)
     const t1 = setTimeout(() => setPhase("closing"), 2000);
-    // 커튼 다 내려온 후 밤으로 전환 + 커튼 올리기 시작 (0.7s)
-    const t2 = setTimeout(() => setPhase("opening"), 2800);
-    // 커튼 다 올라간 후 UI 표시
-    const t3 = setTimeout(() => setPhase("night"), 3600);
+    const t2 = setTimeout(() => setPhase("opening"), 2700);
+    const t3 = setTimeout(() => setPhase("night"),   3400);
     return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
   }, []);
 
@@ -226,132 +237,97 @@ export default function MonsterMansionPage() {
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         html, body { height: 100%; overflow: hidden; }
 
-        @keyframes fadeIn  { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-        @keyframes slideInLeft { from { transform: translateX(-100%); } to { transform: translateX(0); } }
+        @keyframes fadeIn    { from { opacity: 0 } to { opacity: 1 } }
+        @keyframes slideUp   { from { transform: translateY(100%) } to { transform: translateY(0) } }
+        @keyframes slideInLeft { from { transform: translateX(-100%) } to { transform: translateX(0) } }
         @keyframes pulse {
-          0%,100% { box-shadow: 0 0 0 0 rgba(255,255,255,0.3); }
-          50%      { box-shadow: 0 0 0 7px rgba(255,255,255,0); }
+          0%, 100% { box-shadow: 0 0 0 0 rgba(255,255,255,0.3) }
+          50%       { box-shadow: 0 0 0 7px rgba(255,255,255,0) }
         }
-        @keyframes curtainDown {
-          from { transform: translateY(-100%); }
-          to   { transform: translateY(0%); }
-        }
-        @keyframes curtainUp {
-          from { transform: translateY(0%); }
-          to   { transform: translateY(-100%); }
-        }
+        @keyframes curtainDown { from { transform: translateY(-100%) } to { transform: translateY(0) } }
+        @keyframes curtainUp   { from { transform: translateY(0) }     to { transform: translateY(-100%) } }
 
+        /* ── 루트 ── */
         .root {
-          width: 100%;
-          max-width: 420px;
-          height: 100dvh;
-          margin: 0 auto;
-          position: relative;
-          overflow: hidden;
+          width: 100%; max-width: 420px; height: 100dvh;
+          margin: 0 auto; position: relative; overflow: hidden;
           font-family: 'Nunito', sans-serif;
         }
+
+        /* ── 배경 ── */
         .bg-day, .bg-night {
           position: absolute; inset: 0;
-          background-size: cover;
-          background-position: center center;
-          background-repeat: no-repeat;
+          background-size: cover; background-position: center; background-repeat: no-repeat;
         }
-        .bg-day   { background-image: url('/images/맨션.jpg'); z-index: 0; }
-        .bg-night {
-          background-image: url('/images/맨션-밤.jpg');
-          z-index: 1; opacity: 0;
-          transition: opacity 1.4s ease-in-out;
-        }
+        .bg-day   { background-image: url('/images/맨션.jpg');    z-index: 0; }
+        .bg-night { background-image: url('/images/맨션-밤.jpg'); z-index: 1; opacity: 0; transition: opacity 1.4s ease-in-out; }
         .bg-night.visible { opacity: 1; }
-        .bg-overlay {
-          position: absolute; inset: 0; z-index: 2;
-          background: linear-gradient(180deg, rgba(5,2,16,0.3) 0%, rgba(5,2,16,0.05) 50%, rgba(5,2,16,0.35) 100%);
-          transition: background 1.4s ease-in-out;
-        }
-        .bg-overlay.night {
-          background: linear-gradient(180deg, rgba(5,2,16,0.5) 0%, rgba(5,2,16,0.1) 50%, rgba(5,2,16,0.55) 100%);
-        }
 
-        /* CURTAIN */
+        /* ── 커튼 ── */
         .curtain {
           position: absolute; inset: 0; z-index: 50;
-          background: #050210;
-          transform: translateY(-100%);
-          pointer-events: none;
+          background: #050210; transform: translateY(-100%); pointer-events: none;
         }
         .curtain.closing { animation: curtainDown 0.7s cubic-bezier(.4,0,.2,1) forwards; }
         .curtain.opening { animation: curtainUp   0.7s cubic-bezier(.4,0,.2,1) forwards; }
 
-        /* NAV */
+        /* ── 네비게이션 ── */
         .nav {
           position: absolute; top: 0; left: 0; right: 0; z-index: 10;
           display: flex; align-items: center; justify-content: space-between;
           padding: 14px 20px;
-          background: rgba(5,2,16,0.5);
-          backdrop-filter: blur(8px);
+          background: rgba(5,2,16,0.5); backdrop-filter: blur(8px);
+          animation: fadeIn 0.5s ease forwards;
         }
         .nav-logo {
           font-family: 'Fredoka One', cursive;
           font-size: 13px; color: #c9a7f5; letter-spacing: 1.5px;
-          opacity: 0; animation: fadeIn 0.6s ease 0.5s forwards;
         }
         .hamburger {
           display: flex; flex-direction: column; gap: 5px;
           cursor: pointer; background: none; border: none; padding: 4px;
         }
-        .hamburger span {
-          display: block; width: 22px; height: 2px;
-          background: #c9a7f5; border-radius: 2px;
-        }
+        .hamburger span { display: block; width: 22px; height: 2px; background: #c9a7f5; border-radius: 2px; }
 
-        /* HOT SPOTS */
+        /* ── 핫스팟 ── */
         .spot {
           position: absolute; z-index: 5; cursor: pointer;
-          display: flex; align-items: center; justify-content: center;
-          opacity: 0;
+          display: flex; flex-direction: column; align-items: center; gap: 6px;
+          animation: fadeIn 0.4s ease forwards;
           -webkit-tap-highlight-color: transparent;
         }
-        .spot.visible { animation: fadeIn 0.4s ease forwards; }
         .spot-ring {
           width: 38px; height: 38px; border-radius: 50%;
           display: flex; align-items: center; justify-content: center;
           border: 2px solid rgba(255,255,255,0.25);
-          background: rgba(255,255,255,0.1);
-          backdrop-filter: blur(4px);
+          background: rgba(255,255,255,0.1); backdrop-filter: blur(4px);
           font-size: 17px;
           animation: pulse 2.5s ease-in-out infinite;
           transition: background 0.2s, transform 0.15s;
         }
         .spot:active .spot-ring { background: rgba(255,255,255,0.25); transform: scale(1.12); }
         .spot-label {
-          position: absolute; bottom: calc(100% + 6px); left: 50%;
-          transform: translateX(-50%);
           background: rgba(5,2,16,0.9);
           border: 1px solid rgba(200,160,255,0.3);
           border-radius: 8px; padding: 4px 9px;
           white-space: nowrap; font-size: 10px;
           color: #c9a7f5; font-weight: 800;
-          pointer-events: none; opacity: 0;
-          transition: opacity 0.15s;
+          pointer-events: none;
         }
 
-        /* PAGE OVERLAY */
+        /* ── 페이지 오버레이 ── */
         .page {
           position: absolute; inset: 0; z-index: 20;
           background: #0d0620;
-          display: flex; flex-direction: column;
-          overflow-y: auto;
+          display: flex; flex-direction: column; overflow-y: auto;
           animation: slideUp 0.4s cubic-bezier(.22,1,.36,1);
         }
         .page-header {
           position: sticky; top: 0;
           display: flex; align-items: center; gap: 12px;
           padding: 16px 20px;
-          background: rgba(13,6,32,0.96);
-          backdrop-filter: blur(8px);
-          border-bottom: 1px solid rgba(200,160,255,0.1);
-          z-index: 10;
+          background: rgba(13,6,32,0.96); backdrop-filter: blur(8px);
+          border-bottom: 1px solid rgba(200,160,255,0.1); z-index: 10;
         }
         .back-btn {
           width: 34px; height: 34px; border-radius: 50%;
@@ -359,121 +335,98 @@ export default function MonsterMansionPage() {
           background: transparent; cursor: pointer;
           color: #c9a7f5; font-size: 16px;
           display: flex; align-items: center; justify-content: center;
-          transition: background 0.2s;
-          -webkit-tap-highlight-color: transparent;
+          transition: background 0.2s; -webkit-tap-highlight-color: transparent;
         }
         .back-btn:active { background: rgba(200,160,255,0.15); }
-        .page-title {
-          font-family: 'Fredoka One', cursive;
-          font-size: 20px; color: white;
-        }
+        .page-title { font-family: 'Fredoka One', cursive; font-size: 20px; color: white; }
 
-        /* SIDE MENU */
+        /* ── 사이드 메뉴 ── */
         .menu {
           position: absolute; inset: 0; z-index: 30;
           background: rgba(5,2,16,0.97);
           display: flex; flex-direction: column;
-          padding: 64px 28px 28px;
-          gap: 4px;
+          padding: 64px 28px 28px; gap: 4px;
           animation: slideInLeft 0.35s cubic-bezier(.22,1,.36,1);
         }
         .menu-close {
           position: absolute; top: 16px; right: 20px;
           font-size: 24px; color: #c9a7f5; cursor: pointer;
-          background: none; border: none;
-          -webkit-tap-highlight-color: transparent;
+          background: none; border: none; -webkit-tap-highlight-color: transparent;
         }
         .menu-item {
           padding: 15px 0;
           border-bottom: 1px solid rgba(200,160,255,0.1);
-          font-family: 'Fredoka One', cursive;
-          font-size: 19px; color: #c9a7f5;
-          cursor: pointer;
-          display: flex; align-items: center; gap: 10px;
-          text-decoration: none;
-          -webkit-tap-highlight-color: transparent;
+          font-family: 'Fredoka One', cursive; font-size: 19px; color: #c9a7f5;
+          cursor: pointer; display: flex; align-items: center; gap: 10px;
+          text-decoration: none; -webkit-tap-highlight-color: transparent;
         }
         .menu-item:active { color: white; }
 
-        /* PAGE CONTENT */
-        .page-body {
-          padding: 24px 20px;
-          display: flex; flex-direction: column; gap: 16px;
-        }
-        .page-body h2 {
-          font-family: 'Fredoka One', cursive;
-          font-size: 24px; color: white;
-        }
-        .page-body h3 {
-          font-family: 'Fredoka One', cursive;
-          font-size: 16px; color: #c9a7f5; margin-bottom: 4px;
-        }
+        /* ── 페이지 콘텐츠 공통 ── */
+        .page-body { padding: 24px 20px; display: flex; flex-direction: column; gap: 16px; }
+        .page-body h2 { font-family: 'Fredoka One', cursive; font-size: 24px; color: white; }
+        .page-body h3 { font-family: 'Fredoka One', cursive; font-size: 16px; color: #c9a7f5; margin-bottom: 4px; }
         .page-desc { font-size: 14px; line-height: 1.75; color: rgba(200,180,240,0.8); }
 
+        /* 캐릭터 카드 */
         .char-card {
           display: flex; gap: 14px; align-items: flex-start;
-          background: rgba(255,255,255,0.04);
-          border-radius: 14px; padding: 16px;
+          background: rgba(255,255,255,0.04); border-radius: 14px; padding: 16px;
           border: 1px solid rgba(200,160,255,0.1);
         }
         .char-avatar {
-          width: 52px; height: 52px; border-radius: 12px;
-          display: flex; align-items: center; justify-content: center;
-          font-size: 26px; flex-shrink: 0;
-          background: rgba(201,167,245,0.1);
-          border: 1px solid rgba(201,167,245,0.2);
+          width: 52px; height: 52px; border-radius: 12px; flex-shrink: 0;
+          display: flex; align-items: center; justify-content: center; font-size: 26px;
+          background: rgba(201,167,245,0.1); border: 1px solid rgba(201,167,245,0.2);
         }
         .char-card p { font-size: 13px; line-height: 1.6; color: rgba(200,180,240,0.75); }
 
+        /* 지도 그리드 */
         .map-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         .map-card {
-          background: rgba(255,255,255,0.04);
-          border: 1px solid rgba(200,160,255,0.1);
-          border-radius: 12px; padding: 14px 12px;
-          display: flex; flex-direction: column; gap: 4px;
+          background: rgba(255,255,255,0.04); border: 1px solid rgba(200,160,255,0.1);
+          border-radius: 12px; padding: 14px 12px; display: flex; flex-direction: column; gap: 4px;
         }
         .map-emoji { font-size: 22px; }
         .map-name  { font-size: 13px; font-weight: 800; color: #c9a7f5; }
         .map-desc  { font-size: 11px; color: rgba(200,180,240,0.6); }
 
+        /* SNS */
         .sns-list { display: flex; flex-direction: column; gap: 10px; }
         .sns-item {
           display: flex; align-items: center; gap: 14px;
-          border-radius: 14px; padding: 14px 16px;
-          border: 1px solid rgba(200,160,255,0.1);
+          border-radius: 14px; padding: 14px 16px; border: 1px solid rgba(200,160,255,0.1);
         }
         .sns-name   { font-size: 14px; font-weight: 800; color: white; }
         .sns-handle { font-size: 12px; color: rgba(200,180,240,0.6); }
         .follow-btn {
           margin-left: auto;
-          background: rgba(201,167,245,0.15);
-          border: 1px solid rgba(201,167,245,0.35);
+          background: rgba(201,167,245,0.15); border: 1px solid rgba(201,167,245,0.35);
           border-radius: 20px; padding: 6px 14px;
           font-size: 12px; font-weight: 800; color: #c9a7f5;
-          cursor: pointer; font-family: 'Nunito', sans-serif;
-          -webkit-tap-highlight-color: transparent;
+          cursor: pointer; font-family: 'Nunito', sans-serif; -webkit-tap-highlight-color: transparent;
         }
 
+        /* 배지 */
         .badge-row { display: flex; flex-wrap: wrap; gap: 8px; }
         .badge {
-          background: rgba(201,167,245,0.12);
-          border: 1px solid rgba(201,167,245,0.25);
-          border-radius: 20px; padding: 6px 14px;
-          font-size: 12px; color: #c9a7f5; font-weight: 700;
+          background: rgba(201,167,245,0.12); border: 1px solid rgba(201,167,245,0.25);
+          border-radius: 20px; padding: 6px 14px; font-size: 12px; color: #c9a7f5; font-weight: 700;
         }
 
+        /* 방 목록 */
         .room-list { display: flex; flex-direction: column; gap: 8px; }
         .room-card {
           display: flex; align-items: center; justify-content: space-between;
           border-radius: 12px; padding: 14px 16px;
-          border: 1px solid rgba(200,160,255,0.1);
-          background: rgba(255,255,255,0.03);
+          border: 1px solid rgba(200,160,255,0.1); background: rgba(255,255,255,0.03);
         }
         .room-card.available { background: rgba(167,245,196,0.07); border-color: rgba(167,245,196,0.2); }
         .room-num { font-family: 'Fredoka One', cursive; font-size: 18px; color: white; }
         .room-card.available .room-status { font-size: 12px; color: #a7f5c4; font-weight: 800; }
         .room-card.taken     .room-status { font-size: 12px; color: rgba(200,180,240,0.4); font-weight: 700; }
 
+        /* 에피소드 */
         .ep-card {
           display: flex; gap: 14px; align-items: flex-start;
           padding: 14px 0; border-bottom: 1px solid rgba(200,160,255,0.08);
@@ -482,10 +435,10 @@ export default function MonsterMansionPage() {
         .ep-title { font-size: 15px; font-weight: 800; color: white; margin-bottom: 4px; }
         .ep-desc  { font-size: 13px; color: rgba(200,180,240,0.7); line-height: 1.6; }
 
+        /* 굿즈 */
         .goods-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         .goods-card {
-          background: rgba(255,255,255,0.04);
-          border: 1px solid rgba(200,160,255,0.1);
+          background: rgba(255,255,255,0.04); border: 1px solid rgba(200,160,255,0.1);
           border-radius: 14px; padding: 18px 14px;
           display: flex; flex-direction: column; align-items: center; gap: 8px;
         }
@@ -494,37 +447,40 @@ export default function MonsterMansionPage() {
       `}</style>
 
       <div className="root">
+        {/* 배경 레이어 */}
         <div className="bg-day" />
-        <div className={`bg-night${isNight ? " visible" : ""}`} />
-        <div className={`bg-overlay${isNight ? " night" : ""}`} />
+        <div className={`bg-night${phase === "opening" || phase === "night" ? " visible" : ""}`} />
 
         {/* 커튼 */}
         <div className={`curtain${phase === "closing" || phase === "opening" ? ` ${phase}` : ""}`} />
 
-        {/* Nav */}
-        {uiVisible && (
-          <nav className="nav">
-            <div className="nav-logo">✦ MONSTER MANSION ✦</div>
-            <button className="hamburger" onClick={() => setMenuOpen(true)} aria-label="메뉴">
-              <span /><span /><span />
-            </button>
-          </nav>
+        {/* ── night 이후에만 렌더 ── */}
+        {showUI && (
+          <>
+            {/* 네비게이션 */}
+            <nav className="nav">
+              <div className="nav-logo">✦ MONSTER MANSION ✦</div>
+              <button className="hamburger" onClick={() => setMenuOpen(true)} aria-label="메뉴">
+                <span /><span /><span />
+              </button>
+            </nav>
+
+            {/* 핫스팟 */}
+            {SPOTS.map((spot, i) => (
+              <div
+                key={spot.id}
+                className="spot"
+                style={{ ...spot.style, animationDelay: `${i * 0.08}s` }}
+                onClick={() => setCurrentPage(spot.id)}
+              >
+                <div className="spot-ring">{spot.emoji}</div>
+                <div className="spot-label">{spot.label}</div>
+              </div>
+            ))}
+          </>
         )}
 
-        {/* Hot spots */}
-        {uiVisible && SPOTS.map((spot, i) => (
-          <div
-            key={spot.id}
-            className={`spot ${uiVisible ? "visible" : ""}`}
-            style={{ ...spot.style, animationDelay: `${i * 0.1}s` }}
-            onClick={() => setCurrentPage(spot.id)}
-          >
-            <div className="spot-ring">{spot.emoji}</div>
-            <div className="spot-label">{spot.label}</div>
-          </div>
-        ))}
-
-        {/* Page overlay */}
+        {/* 페이지 오버레이 */}
         {currentPage && (
           <div className="page">
             <div className="page-header">
@@ -537,7 +493,7 @@ export default function MonsterMansionPage() {
           </div>
         )}
 
-        {/* Side menu */}
+        {/* 사이드 메뉴 */}
         {menuOpen && (
           <div className="menu">
             <button className="menu-close" onClick={() => setMenuOpen(false)}>✕</button>
@@ -550,7 +506,10 @@ export default function MonsterMansionPage() {
                 <div
                   key={item.id}
                   className="menu-item"
-                  onClick={() => { setCurrentPage(item.id as PageId); setMenuOpen(false); }}
+                  onClick={() => {
+                    if (item.id in PAGES) setCurrentPage(item.id as PageId);
+                    setMenuOpen(false);
+                  }}
                 >
                   <span>{item.emoji}</span> {item.label}
                 </div>
