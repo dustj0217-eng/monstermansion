@@ -74,7 +74,7 @@ export default function MapPage() {
   }, []);
 
   // 거리 계산 (핀치)
-  const getDist = (t1: Touch, t2: Touch) => {
+  const getDist = (t1: any, t2: any) => {
     return Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
   };
 
@@ -220,11 +220,11 @@ export default function MapPage() {
         }
       `}</style>
 
-      <div className="viewport"
+      <div
         ref={viewportRef}
+        className="viewport"
         onTouchStart={onTouchStart}
       >
-
         <div
           className="map"
           style={{
