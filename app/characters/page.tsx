@@ -21,49 +21,28 @@ const ROOMS = [
   {
     id: "301",
     label: "301호",
-    groupImage: "", // 예: "/images/characters/301/group.png"
+    groupImage: "/images/몬스터맨션.jpg", // 예: "/images/characters/301/group.png"
     characters: [
       {
-        id: "dracula",
-        name: "드라큘라 백작",
-        nameEn: "Count Dracula",
-        desc: "맨션에서 가장 오래된 입주자. 낮에는 잠들고 밤에만 활동합니다. 유독 빨간 과일주스를 즐겨 마신다는 소문이 있어요. 겉으론 무뚝뚝하지만 이웃을 은근히 챙깁니다.",
-        image: "", // 예: "/images/characters/301/dracula.png"
+        id: "dra",
+        name: "드라",
+        nameEn: "뱀파이어",
+        desc: "혈액 대신 카페인 중독 뱀파이어?\n새벽 출근, 밤 퇴근을 반복하는\n햇빛 싫어 직장인.",
+        image: "/images/characters/dra.png", // 예: "/images/characters/301/dra.png"
       },
       {
-        id: "wolfman",
-        name: "울프맨",
-        nameEn: "Wolfman",
-        desc: "보름달이 뜨는 날이면 301호에서 피아노 소리가 들려옵니다. 알고 보니 엄청난 음악 천재. 평소엔 수줍음이 많지만 무대 위에선 누구보다 빛납니다.",
-        image: "", // 예: "/images/characters/301/wolfman.png"
+        id: "may",
+        name: "메이",
+        nameEn: "마녀",
+        desc: "인간 나이로는 대학 신입생,\n마녀 나이로는 초보 마녀.\n포션 가게의 꿈을 꾸는 화학과 마녀.",
+        image: "/images/characters/may.png", // 예: "/images/characters/301/wolfman.png"
       },
       {
-        id: "zombie",
-        name: "좀비 씨",
-        nameEn: "Mr. Zombie",
-        desc: "말수는 적지만 요리 실력은 맨션 최고. 매주 화요일마다 층간 음식 나눔을 합니다. 레시피를 절대 알려주지 않는 것이 유일한 단점.",
+        id: "gosti",
+        name: "고스티",
+        nameEn: "유령",
+        desc: "학교에선 제일 존재감 없는 학생,\n집에서는 식탁보를 뒤집어쓰고 다니는\n고3 유령",
         image: "", // 예: "/images/characters/301/zombie.png"
-      },
-    ],
-  },
-  {
-    id: "302",
-    label: "302호",
-    groupImage: "", // 예: "/images/characters/302/group.png"
-    characters: [
-      {
-        id: "witch",
-        name: "헤이젤",
-        nameEn: "Hazel",
-        desc: "302호 전체가 약초 냄새로 가득한 이유. 실험을 너무 좋아해서 가끔 폭발 사고를 냅니다. 그래도 아무도 내쫓지 못하는 건 그녀의 포션이 너무 유용하기 때문.",
-        image: "", // 예: "/images/characters/302/hazel.png"
-      },
-      {
-        id: "slime",
-        name: "슬라임",
-        nameEn: "Slime",
-        desc: "어디서 왔는지 아무도 모릅니다. 어느 날 갑자기 302호 욕실에서 발견됐어요. 말은 못 하지만 표정이 너무 풍부해서 의사소통에 문제는 없습니다.",
-        image: "", // 예: "/images/characters/302/slime.png"
       },
     ],
   },
@@ -156,93 +135,190 @@ export default function CharactersPage() {
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;700;800&display=swap');
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        @import url('https://fonts.googleapis.com/css2?family=Jua&display=swap');
+
+        *, *::before, *::after {
+          box-sizing: border-box;
+          margin: 0;
+          padding: 0;
+        }
 
         .characters-page {
-          width: 100%; max-width: 420px; min-height: 100dvh;
+          width: 100%;
+          max-width: 430px;
+          min-height: 100dvh;
           margin: 0 auto;
-          background: #0d0620; font-family: 'Nunito', sans-serif;
-          color: white; overflow-x: hidden;
+          background: #0d0620;
+          font-family: 'Nunito', sans-serif;
+          color: white;
+          overflow-x: hidden;
         }
 
-        /* 호실 탭 */
+        /* 상단 탭 */
         .room-nav {
-          position: sticky; top: 0; z-index: 10; display: flex;
-          background: rgba(13,6,32,0.97); backdrop-filter: blur(12px);
+          position: sticky;
+          top: 0;
+          z-index: 10;
+          display: flex;
+          background: rgba(13,6,32,0.97);
+          backdrop-filter: blur(12px);
           border-bottom: 1px solid rgba(200,160,255,0.1);
         }
+
         .room-tab {
-          flex: 1; padding: 14px 0;
-          font-family: 'Fredoka One', cursive; font-size: 15px;
-          color: rgba(201,167,245,0.4); background: none; border: none;
-          cursor: pointer; position: relative; transition: color 0.2s;
+          flex: 1;
+          padding: 14px 0;
+          font-family: 'Fredoka One', cursive;
+          font-size: 15px;
+          color: rgba(201,167,245,0.4);
+          background: none;
+          border: none;
+          cursor: pointer;
+          position: relative;
+          transition: color 0.2s;
           -webkit-tap-highlight-color: transparent;
         }
-        .room-tab.active { color: #c9a7f5; }
-        .room-tab.active::after {
-          content: ''; position: absolute; bottom: 0; left: 20%; right: 20%;
-          height: 2px; background: #c9a7f5; border-radius: 2px;
+
+        .room-tab.active {
+          color: #c9a7f5;
         }
 
-        /* 콘텐츠 페이드 */
-        .room-content { transition: opacity 0.22s ease; }
-        .room-content.fading { opacity: 0; }
+        .room-tab.active::after {
+          content: '';
+          position: absolute;
+          bottom: 0;
+          left: 20%;
+          right: 20%;
+          height: 2px;
+          background: #c9a7f5;
+          border-radius: 2px;
+        }
 
-        /* 단체 일러스트 */
+        /* 페이드 */
+        .room-content {
+          transition: opacity 0.22s ease;
+        }
+        .room-content.fading {
+          opacity: 0;
+        }
+
+        /* 단체 이미지 */
         .group-section {
-          width: 100%; background: #0d0620;
-          opacity: 0; transform: translateY(20px);
+          width: 100%;
+          background: #0d0620;
+          opacity: 0;
+          transform: translateY(20px);
           transition: opacity 0.6s ease, transform 0.6s ease;
         }
-        .group-section.visible { opacity: 1; transform: translateY(0); }
-        .group-section img { width: 100%; display: block; }
-        .group-placeholder {
-          width: 100%; aspect-ratio: 2 / 1;
-          display: flex; align-items: center; justify-content: center;
-        }
-        .group-placeholder-text {
-          font-size: 11px; color: rgba(201,167,245,0.3);
-          text-align: center; line-height: 1.8;
+
+        .group-section.visible {
+          opacity: 1;
+          transform: translateY(0);
         }
 
-        /* 개인 캐릭터 섹션 */
-        .char-section { width: 100%; padding: 32px 0 20px; }
-        .char-inner { display: flex; align-items: flex-end; width: 100%; }
-        .char-inner.even { flex-direction: row; }
-        .char-inner.odd  { flex-direction: row-reverse; }
+        .group-section img {
+          width: 100%;
+          display: block;
+        }
 
-        /* 슬라이드 인 */
-        .slide-left  { opacity: 0; transform: translateX(-44px); transition: opacity 0.55s ease, transform 0.55s ease; }
-        .slide-right { opacity: 0; transform: translateX(44px);  transition: opacity 0.55s ease, transform 0.55s ease; }
-        .slide-left.in, .slide-right.in { opacity: 1; transform: translateX(0); }
-        .char-text-col.slide-left,
-        .char-text-col.slide-right { transition-delay: 0.09s; }
+        /* 캐릭터 카드 */
+        .char-section {
+          padding: 16px 24px 0px 24px;
+        }
 
-        /* 이미지 컬럼 */
-        .char-img-col { width: 30%; flex-shrink: 0; }
+        /* 배경 교차 (선택 요소지만 추천) */
+        .char-section:nth-child(odd) {
+          background: #1a0f2e;
+        }
+        .char-section:nth-child(even) {
+          background: #140a26;
+        }
+
+        /* 내부 레이아웃 */
+        .char-inner {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          min-height: 140px;
+        }
+
+        .char-inner.even {
+          flex-direction: row;
+        }
+
+        .char-inner.odd {
+          flex-direction: row-reverse;
+        }
+
+        /* 이미지 */
+        .char-img-col {
+          width: 45%;
+          flex-shrink: 0;
+        }
+
         .char-img {
-          width: 100%; display: block;
-          filter: drop-shadow(0 10px 28px rgba(0,0,0,0.6));
+          width: 100%;
+          display: block;
+          filter: drop-shadow(0 10px 24px rgba(0,0,0,0.5));
         }
-        .img-placeholder {
-          width: 100%; aspect-ratio: 3 / 4;
-          display: flex; align-items: center; justify-content: center;
-          border: 1px dashed rgba(255,255,255,0.08);
-        }
-        .placeholder-text  { font-size: 10px; color: rgba(255,255,255,0.3); text-align: center; line-height: 1.7; }
-        .placeholder-text span { font-size: 9px; opacity: 0.7; }
 
-        /* 텍스트 컬럼 */
+        /* 텍스트 */
         .char-text-col {
-          flex: 1; padding: 0 16px 16px 12px;
-          display: flex; flex-direction: column; gap: 6px;
+          align-items: center;
+          text-align: center;
         }
-        .char-inner.odd .char-text-col { padding: 0 12px 16px 16px; }
 
-        .char-name    { font-family: 'Fredoka One', cursive; font-size: 21px; color: white; line-height: 1.15; }
-        .char-name-en { font-size: 10px; color: rgba(255,255,255,0.3); letter-spacing: 1.5px; margin-bottom: 2px; }
-        .char-desc    { font-size: 11.5px; line-height: 1.8; color: rgba(255,255,255,0.5); margin-top: 4px; }
+        /* 이름 한 줄 정렬 */
+        .char-name-row {
+          display: flex;
+          align-items: baseline;
+          justify-content: center;
+          gap: 8px;
+        }
+
+        .char-name {
+          font-family: 'Jua', sans-serif;
+          font-size: 22px;
+          line-height: 1.2;
+        }
+
+        .char-name-en {
+          font-size: 11px;
+          color: rgba(255,255,255,0.35);
+          letter-spacing: 1.2px;
+        }
+
+        /* 설명 */
+        .char-desc {
+          font-size: 12.5px;
+          line-height: 1.8;
+          color: rgba(255,255,255,0.55);
+          white-space: pre-line;
+
+          display: -webkit-box;
+          -webkit-line-clamp: 3;   /* ← 최대 줄 */
+          -webkit-box-orient: vertical;
+          overflow: hidden;
+        }
+
+        /* 애니메이션 (부드럽게 조정) */
+        .slide-left {
+          opacity: 0;
+          transform: translateX(-28px);
+          transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .slide-right {
+          opacity: 0;
+          transform: translateX(28px);
+          transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .slide-left.in,
+        .slide-right.in {
+          opacity: 1;
+          transform: translateX(0);
+        }
       `}</style>
 
       <div className="characters-page">
