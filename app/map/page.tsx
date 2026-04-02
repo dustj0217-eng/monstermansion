@@ -13,7 +13,7 @@ const MIN_SCALE = 1;
 const MAX_SCALE = 2.5;
 
 const SPOTS = [
-  { label: "몬스터 맨션", x: 500, y: 500, href: "/lobby" },
+  { label: "몬스터 맨션", x: 500, y: 500, href: "/" },
   { label: "고등학교", x: 845, y: 720, href: "/school" },
   { label: "대학교", x: 120, y: 840, href: "/university" },
   { label: "회사", x: 750, y: 180, href: "/company" },

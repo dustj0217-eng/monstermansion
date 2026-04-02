@@ -231,6 +231,13 @@ a {
 .mm-curtain.closing { animation: curtainDown 0.7s cubic-bezier(.4, 0, .2, 1) forwards; }
 .mm-curtain.opening { animation: curtainUp   0.7s cubic-bezier(.4, 0, .2, 1) forwards; }
 
+/* 캐릭터? */
+
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+
 /* 핫스팟 (pulse 스타일) */
 .mm-spot {
   position: absolute;
@@ -279,4 +286,78 @@ a {
   font-size: 10px;
   color: rgba(201, 167, 245, 0.6);
   white-space: nowrap;
+}
+
+/* ── 맨션 문 트랜지션 ── */
+.mm-door-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  pointer-events: none;
+  display: flex;
+}
+
+.mm-door-left,
+.mm-door-right {
+  width: 50%;
+  height: 100%;
+  background: #050210;
+  /* 문 질감: 세로 패널 라인 */
+  background-image: repeating-linear-gradient(
+    90deg,
+    transparent,
+    transparent 48px,
+    rgba(255,255,255,0.03) 48px,
+    rgba(255,255,255,0.03) 50px
+  );
+  position: relative;
+}
+
+/* 문 중앙 손잡이 라인 */
+.mm-door-left::after,
+.mm-door-right::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  width: 2px;
+  height: 60px;
+  background: rgba(201,167,245,0.4);
+  transform: translateY(-50%);
+  border-radius: 2px;
+}
+.mm-door-left::after  { right: 18px; }
+.mm-door-right::after { left: 18px; }
+
+/* ── 닫힘 (메인에서 출발) ── */
+@keyframes door-close-left {
+  from { transform: translateX(-100%); }
+  to   { transform: translateX(0); }
+}
+@keyframes door-close-right {
+  from { transform: translateX(100%); }
+  to   { transform: translateX(0); }
+}
+
+.mm-door-overlay.closing .mm-door-left {
+  animation: door-close-left 0.55s cubic-bezier(0.32, 0, 0.67, 0) forwards;
+}
+.mm-door-overlay.closing .mm-door-right {
+  animation: door-close-right 0.55s cubic-bezier(0.32, 0, 0.67, 0) forwards;
+}
+
+/* ── 열림 (로비에서 출발) ── */
+@keyframes door-open-left {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-100%); }
+}
+@keyframes door-open-right {
+  from { transform: translateX(0); }
+  to   { transform: translateX(100%); }
+}
+
+.mm-door-overlay.opening .mm-door-left {
+  animation: door-open-left 0.65s cubic-bezier(0.33, 1, 0.68, 1) 0.1s forwards;
+}
+.mm-door-overlay.opening .mm-door-right {
+  animation: door-open-right 0.65s cubic-bezier(0.33, 1, 0.68, 1) 0.1s forwards;
 }
