@@ -31,6 +31,15 @@
   --radius-full: 9999px;
 }
 
+/* 폰트 */
+.font-jua {
+  font-family: 'Jua', sans-serif;
+}
+
+.font-noto {
+  font-family: 'Noto Sans KR', sans-serif;
+}
+
 /* ── Reset ── */
 *, *::before, *::after {
   box-sizing: border-box;

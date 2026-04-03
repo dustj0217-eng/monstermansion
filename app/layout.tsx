@@ -43,6 +43,12 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ko">
+      <head>
+        <link
+          href="https://fonts.googleapis.com/css2?family=Jua&family=Noto+Sans+KR:wght@300;400;500&display=swap"
+          rel="stylesheet"
+        />
+      </head>
       <body>
         {/*
           모바일 최적화 컨테이너.
