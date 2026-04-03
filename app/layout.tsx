@@ -2,8 +2,31 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Monster Mansion",
-  description: "몬스터들이 사는 맨션",
+  metadataBase: new URL("https://monstermansion.site"),
+
+  title: {
+    default: "Monster Mansion",
+    template: "%s | Monster Mansion",
+  },
+
+  description: "몬스터들이 살아가는 기묘한 맨션의 이야기",
+
+  applicationName: "Monster Mansion",
+
+  keywords: [
+    "몬스터맨션",
+    "Monster Mansion",
+    "인디게임",
+    "스토리 게임",
+    "캐릭터",
+  ],
+
+  authors: [{ name: "Studio Forge" }],
+  creator: "Studio Forge",
+
+  icons: {
+    icon: "/favicon.png",
+  },
 };
 
 export const viewport: Viewport = {
