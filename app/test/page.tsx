@@ -3,95 +3,129 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 
 // ── 타입 정의 ─────────────────────────────────────────────
-// 4축: E/I, S/N, T/F, J/P
-// 양수 = 앞 글자(E, S, T, J), 음수 = 뒷 글자(I, N, F, P)
 type Axis = "EI" | "SN" | "TF" | "JP";
 interface ScoreEntry { axis: Axis; value: number; }
 
-// ── 8가지 입주민 유형 ─────────────────────────────────────
-// MBTI 4축 기반으로 매핑
-// EI: E>0, I<0 / SN: S>0, N<0 / TF: T>0, F<0 / JP: J>0, P<0
 interface ResidentType {
   id: number;
   monster: string;
+  image: string;
   title: string;
   tagline: string;
   desc: string;
-  // 매핑 조건: 각 축의 방향
-  match: { EI: "E" | "I"; SN: "S" | "N"; TF?: "T" | "F"; JP?: "J" | "P" };
+  strength: string;
+  weakness: string;
+  tip: string;
+  match: { EI?: "E" | "I"; SN?: "S" | "N"; TF?: "T" | "F"; JP?: "J" | "P" };
+  compatibleWith: number[];
+  incompatibleWith: number[];
 }
 
 const RESIDENT_TYPES: ResidentType[] = [
   {
     id: 1,
-    monster: "밴시",
-    title: "새벽의 집주인",
-    tagline: "소리 없이 모든 걸 꿰뚫는 자",
-    desc: "혼자 있는 시간이 길고, 루틴이 확실하고, 공간에 애착이 강한 사람. 말이 없어 보이지만 사실 맨션에서 제일 많이 알고 있어. 신뢰가 쌓이면 전혀 다른 사람이 나타나.",
-    match: { EI: "I", SN: "S", JP: "J" },
+    monster: "드라큘라",
+    image: "/images/characters/드라큘라.png",
+    title: "밤의 집주인",
+    tagline: "초대받지 않으면 들어올 수 없어.",
+    desc: "낮엔 커튼 치고 혼자 있다가, 밤이 되면 누구보다 날카롭게 돌아가는 사람이야. 루틴이 무너지면 눈빛부터 달라지고, 공간에 대한 애착이 남달라. 먼저 다가오는 타입은 아닌데, 한 번 신뢰를 얻으면 그 사람 평생 기억해.",
+    strength: "한번 꽂히면 깊이가 남달라. 신뢰한 사람에겐 조용하지만 완벽하게 챙겨.",
+    weakness: "문턱이 너무 높아서 사람들이 지레 포기하고 떠나. 사실 너도 그게 좀 서운하잖아.",
+    tip: "먼저 문 한 번만 열어봐. 상대도 초대 기다리고 있을 수 있어.",
+    match: { EI: "I", SN: "N", TF: "F" },
+    compatibleWith: [5, 6],
+    incompatibleWith: [3, 7],
   },
   {
     id: 2,
-    monster: "셀키",
-    title: "열린 문의 이웃",
-    tagline: "바다처럼 품는 자",
-    desc: "언제 와도 반겨주는 타입. 집에 사람 부르는 걸 좋아하고, 관계가 넓고 따뜻해. 맨션의 온도를 올리는 존재. 곁에 있으면 이상하게 마음이 놓여.",
-    match: { EI: "E", SN: "S", TF: "F" },
+    monster: "마녀",
+    image: "/images/characters/마녀.png",
+    title: "3층의 연금술사",
+    tagline: "다 내 계획대로 되고 있어.",
+    desc: "항상 뭔가를 만들고 있어 — 요리든, 프로젝트든, 사람 사이의 판이든. 주변을 자기 페이스로 자연스럽게 끌어당기는 힘이 있고, 규칙엔 관심 없지만 자기만의 원칙은 확실해. 겉으론 쿨해 보이는데 사실 누구보다 섬세하게 신경 쓰고 있어.",
+    strength: "기획력과 실행력이 동시에 돼. 분위기 읽는 눈도 있어서 사람들이 자기도 모르게 따라가.",
+    weakness: "내 방식이 최고라는 확신이 가끔 관계를 삐걱거리게 해. 맞는 말이어도 타이밍이 중요해.",
+    tip: "가끔은 레시피 없이 요리해봐. 의외로 더 잘 풀릴 수도 있어.",
+    match: { EI: "E", SN: "N", JP: "J" },
+    compatibleWith: [4, 8],
+    incompatibleWith: [3, 7],
   },
   {
     id: 3,
-    monster: "픽시",
-    title: "복도의 탐험가",
-    tagline: "반짝이는 걸 놓치지 않는 자",
-    desc: "항상 뭔가 새로운 걸 시도하고 있어. 계획보다 즉흥, 혼자보다 함께. 어디서 뭘 하는지 모르지만 에너지는 제일 강해. 목표가 생기면 눈이 달라져.",
-    match: { EI: "E", SN: "N", JP: "P" },
+    monster: "늑대인간",
+    image: "/images/characters/늑대인간.png",
+    title: "보름달의 입주민",
+    tagline: "억누를수록 더 강하게 터져.",
+    desc: "평소엔 제일 무난해 보이는데 어느 순간 완전히 다른 사람이 나타나. 흐름 타는 걸 잘하고, 새로운 것 앞에선 누구보다 먼저 달려가. 루틴이나 규칙으로 가두려 하면 제일 먼저 질식해.",
+    strength: "에너지 자체가 달라. 분위기 침체됐을 때 이 사람 한 명이면 충분히 뒤집혀.",
+    weakness: "폭발 이후 수습을 잘 못해. 충동적으로 저지른 것들이 나중에 발목 잡을 때가 있어.",
+    tip: "에너지 쓸 방향만 정해두면 진짜 무서운 사람 돼. 방향 없는 전력질주는 그냥 소진이야.",
+    match: { EI: "E", SN: "S", JP: "P" },
+    compatibleWith: [7, 8],
+    incompatibleWith: [1, 2],
   },
   {
     id: 4,
-    monster: "뱀파이어",
-    title: "밤의 단골손님",
-    tagline: "밤을 수집하는 자",
-    desc: "낮엔 거의 없다가 밤에 활성화되는 타입. 혼자만의 세계가 있고, 취미나 작업에 몰입하는 시간이 길어. 감정의 결이 남들보다 촘촘하고, 알고 보면 깊은 사람.",
-    match: { EI: "I", SN: "N", TF: "F" },
+    monster: "프랑켄슈타인",
+    image: "/images/characters/프랑켄슈타인.png",
+    title: "새벽의 제작자",
+    tagline: "완성되기 전까진 아무한테도 안 보여줘.",
+    desc: "혼자 뭔가를 끊임없이 조립하고 만들고 있어. 공간에 대한 애착이 강하고 루틴이 확실한 편인데, 감정을 말로 꺼내는 데 시간이 좀 걸려. 근데 일단 나오면 그게 진심이야. 신뢰 쌓는 데 오래 걸리고, 그만큼 오래가.",
+    strength: "한 번 시작한 건 끝을 봐. 디테일에 강하고 결과물로 증명하는 타입.",
+    weakness: "완벽주의가 발목을 잡아. 보여주기 전에 혼자 지쳐버리는 경우가 너무 많아.",
+    tip: "미완성인 채로 꺼내도 괜찮아. 같이 만드는 것도 나쁘지 않아.",
+    match: { EI: "I", SN: "S", JP: "J" },
+    compatibleWith: [2, 6],
+    incompatibleWith: [3, 8],
   },
   {
     id: 5,
-    monster: "고블린",
-    title: "조용한 관찰자",
-    tagline: "아무도 모르게 다 알고 있는 자",
-    desc: "많이 보고 적게 말해. 맨션 안에서 일어나는 일을 제일 잘 파악하고 있지만 먼저 나서진 않아. 관찰하고, 기록하고, 기억해. 가장 정확한 사람.",
+    monster: "유령",
+    image: "/images/characters/유령.png",
+    title: "아무도 모르는 관찰자",
+    tagline: "다 보고 있었어. 처음부터.",
+    desc: "존재감은 옅은데 정보력은 맨션에서 제일 강해. 여기서 일어나는 일을 다 알고 있지만 먼저 말하지 않아. 필요한 순간에 딱 나타나서 정확한 한마디 던지고 사라지는 타입. 없어지고 나서야 얼마나 중요했는지 알아.",
+    strength: "말 한마디의 무게가 달라. 자주 말 안 하는 만큼, 할 때는 정확해.",
+    weakness: "존재감이 너무 없어서 관계에서 자꾸 후순위가 돼. 억울한 거 알아, 근데 네가 더 드러내야 해.",
+    tip: "알고 있다는 거 가끔은 티 내도 돼. 침묵이 항상 미덕은 아니야.",
     match: { EI: "I", SN: "N", JP: "J" },
+    compatibleWith: [1, 4],
+    incompatibleWith: [3, 7],
   },
   {
     id: 6,
-    monster: "유령",
-    title: "계획형 세입자",
-    tagline: "아무도 모르게 존재하는 자",
-    desc: "일정이 빡빡하고 목표가 명확해. 맨션은 충전 공간. 효율적이고 깔끔하게 살고, 관계도 선택적으로 깊게. 있는 듯 없는 듯, 하지만 사라지면 가장 먼저 티가 나.",
+    monster: "좀비",
+    image: "/images/characters/좀비.png",
+    title: "루틴의 수호자",
+    tagline: "일정 바꾸지 마. 진심으로.",
+    desc: "매일 같은 시간에 일어나고, 같은 동선으로 움직여. 효율 최고, 에너지 낭비 없음. 감정보다 논리, 관계보다 목표. 피곤할 때 건드리면 진짜 좀비가 돼.",
+    strength: "꾸준함이 무기야. 남들이 작심삼일 할 때 혼자 3개월째 유지하고 있어.",
+    weakness: "변수에 약해. 계획이 틀어지면 필요 이상으로 흔들리고, 그게 주변까지 긴장시켜.",
+    tip: "플랜 B를 미리 짜두는 것도 루틴으로 만들어봐. 대비가 되면 변수가 덜 무서워.",
     match: { EI: "I", SN: "S", JP: "P" },
+    compatibleWith: [4, 5],
+    incompatibleWith: [3, 7],
   },
   {
     id: 7,
-    monster: "웨어울프",
-    title: "흘러가는 사람",
-    tagline: "보름달을 기다리는 자",
-    desc: "루틴보다 흐름. 오늘 뭐 할지 오늘 정해. 무겁지 않고 가볍게 지내는 걸 좋아하고, 억누를수록 더 강해져. 새로운 것 앞에서 가장 먼저 달려가는 사람.",
-    match: { EI: "E", SN: "S", JP: "P" },
-  },
-  {
-    id: 8,
-    monster: "슬라임",
-    title: "맨션의 연결고리",
-    tagline: "어디에나 스며드는 자",
-    desc: "사람과 사람 사이를 잇는 존재. 갈등을 중재하고, 분위기를 읽고, 필요한 사람한테 필요한 말을 해줘. 없으면 균형이 무너지는, 맨션의 가장 중요한 입주민.",
-    match: { EI: "E", SN: "N", TF: "F" },
+    monster: "인어",
+    image: "/images/characters/인어.png",
+    title: "열린 문의 이웃",
+    tagline: "여기 앉아. 내가 다 들어줄게.",
+    desc: "사람이 오는 걸 좋아하고, 집에 부르는 걸 더 좋아해. 감정 온도 읽는 게 기가 막히고, 갈등 생기면 제일 먼저 중간에 서. 에너지를 사람한테서 얻는 타입이라, 혼자 있는 시간이 길어지면 눈에 띄게 시들어.",
+    strength: "사람 사이 온도를 올리는 능력. 이 사람 한 명이 공간 전체 분위기를 바꿔.",
+    weakness: "남 챙기다가 정작 자기 감정은 쌓아두는 타입. 나중에 한꺼번에 터질 수 있어.",
+    tip: "들어주는 것만큼 네 얘기도 해. 관계는 일방통행이 아니야.",
+    match: { EI: "E", SN: "S", TF: "F" },
+    compatibleWith: [3, 8],
+    incompatibleWith: [1, 5],
   },
 ];
 
 // ── 질문 데이터 ───────────────────────────────────────────
 interface Choice {
   text: string;
-  scores: ScoreEntry[]; // 여러 축에 가중치 부여
+  scores: ScoreEntry[];
 }
 interface Question {
   text: string;
@@ -100,7 +134,6 @@ interface Question {
 }
 
 const QUESTIONS: Question[] = [
-  // ── Q1. 주거 선호 (컨텍스트, EI/SN 약하게)
   {
     text: "맨션을 고를 때 가장 중요하게 보는 환경은?",
     choices: [
@@ -110,7 +143,6 @@ const QUESTIONS: Question[] = [
       { text: "가족과 함께 있을 수 있는 곳", scores: [{ axis: "TF", value: -1.5 }, { axis: "EI", value: -0.5 }] },
     ],
   },
-  // ── Q2. 통근 거리 (컨텍스트, JP/SN 약하게)
   {
     text: "집에서 주로 가는 곳까지 어느 정도 거리면 괜찮아요?",
     choices: [
@@ -120,7 +152,6 @@ const QUESTIONS: Question[] = [
       { text: "거리보다 환경이 더 중요해", scores: [{ axis: "SN", value: -1.5 }, { axis: "TF", value: -1 }] },
     ],
   },
-  // ── Q3. 일/공부 방향성 (컨텍스트, TF/SN 약하게)
   {
     text: "입주민이 어떤 분야에서 활동하는지 궁금하네요. 지금 하는 일이나 공부, 본인이랑 얼마나 맞는 것 같아요?",
     choices: [
@@ -130,7 +161,6 @@ const QUESTIONS: Question[] = [
       { text: "지금 하는 것과 원래 원했던 것이 좀 달라", scores: [{ axis: "TF", value: -1 }, { axis: "SN", value: -1.5 }] },
     ],
   },
-  // ── Q4. 집에 머무는 시간 (컨텍스트, EI 중간)
   {
     text: "집주인 입장에서 여쭤볼게요. 하루 중 집에 있는 시간이 어느 정도예요?",
     choices: [
@@ -140,7 +170,6 @@ const QUESTIONS: Question[] = [
       { text: "날마다 달라, 딱 정해진 패턴이 없어", scores: [{ axis: "JP", value: -2 }, { axis: "SN", value: -1 }] },
     ],
   },
-  // ── Q5. 장기 부재 (컨텍스트, SN/JP 약하게)
   {
     text: "가까운 시일 내에 집을 오래 비워야 할 상황이 생길 것 같아요?",
     choices: [
@@ -150,7 +179,6 @@ const QUESTIONS: Question[] = [
       { text: "딱히 없어, 당분간은 여기 머물 것 같아", scores: [{ axis: "SN", value: 1 }, { axis: "JP", value: 0.5 }] },
     ],
   },
-  // ── Q6. 집과 사람들 (컨텍스트, EI 중간)
   {
     text: "친구들이 집에 오는 편이에요?",
     choices: [
@@ -160,7 +188,6 @@ const QUESTIONS: Question[] = [
       { text: "오고 싶다면 오는데, 내가 먼저 부르진 않아", scores: [{ axis: "EI", value: -1 }, { axis: "TF", value: 0.5 }] },
     ],
   },
-  // ── Q7. 스트레스 (컨텍스트, TF/JP 중간)
   {
     text: "집에 있을 때 가장 불편한 상황은?",
     choices: [
@@ -170,7 +197,6 @@ const QUESTIONS: Question[] = [
       { text: "계획이 틀어지거나 예상 못 한 일이 생길 때", scores: [{ axis: "JP", value: 2 }, { axis: "TF", value: 1 }] },
     ],
   },
-  // ── Q8. 취미 (컨텍스트, EI/SN 약하게)
   {
     text: "집에서 쉴 때 주로 뭘 하면서 시간을 보내요?",
     choices: [
@@ -180,7 +206,6 @@ const QUESTIONS: Question[] = [
       { text: "친구 만나거나 연락하면서 보내", scores: [{ axis: "EI", value: 2 }, { axis: "TF", value: -1 }] },
     ],
   },
-  // ── Q9. E/I (실질 감별)
   {
     text: "맨션에서 이웃들과 오래 어울리다가 방에 들어왔을 때 드는 첫 느낌은?",
     choices: [
@@ -190,7 +215,6 @@ const QUESTIONS: Question[] = [
       { text: "그때그때 달라, 사람이나 분위기에 따라", scores: [{ axis: "EI", value: -0.5 }, { axis: "SN", value: -0.5 }] },
     ],
   },
-  // ── Q10. S/N (실질 감별)
   {
     text: "새 입주민이 이사를 왔어요. 가장 먼저 뭐가 궁금해요?",
     choices: [
@@ -200,7 +224,6 @@ const QUESTIONS: Question[] = [
       { text: "왜 이 맨션을 골랐는지, 어떤 계기였는지", scores: [{ axis: "SN", value: -3 }, { axis: "EI", value: -0.5 }] },
     ],
   },
-  // ── Q11. T/F (실질 감별)
   {
     text: "같은 층 이웃이 복도에서 고민을 털어놨어요. 나는 주로?",
     choices: [
@@ -210,7 +233,6 @@ const QUESTIONS: Question[] = [
       { text: "그 사람이 뭘 원하는지부터 먼저 물어봐", scores: [{ axis: "TF", value: -1.5 }, { axis: "SN", value: -1 }] },
     ],
   },
-  // ── Q12. J/P (실질 감별)
   {
     text: "이번 주말에 맨션에서 하루가 통째로 비었어요. 나는?",
     choices: [
@@ -229,7 +251,6 @@ function getResidentType(axisScores: Record<Axis, number>): ResidentType {
   const tf = axisScores["TF"] >= 0 ? "T" : "F";
   const jp = axisScores["JP"] >= 0 ? "J" : "P";
 
-  // 점수 기반으로 가장 잘 맞는 유형 찾기
   let best = RESIDENT_TYPES[0];
   let bestScore = -Infinity;
 
@@ -237,17 +258,10 @@ function getResidentType(axisScores: Record<Axis, number>): ResidentType {
     let score = 0;
     const { match } = type;
 
-    // EI, SN은 모든 유형에 필수
-    score += match.EI === ei ? Math.abs(axisScores["EI"]) : -Math.abs(axisScores["EI"]);
-    score += match.SN === sn ? Math.abs(axisScores["SN"]) : -Math.abs(axisScores["SN"]);
-
-    // TF, JP는 정의된 유형만 반영, 없으면 가중치 낮게
-    if (match.TF) {
-      score += match.TF === tf ? Math.abs(axisScores["TF"]) * 0.8 : -Math.abs(axisScores["TF"]) * 0.8;
-    }
-    if (match.JP) {
-      score += match.JP === jp ? Math.abs(axisScores["JP"]) * 0.8 : -Math.abs(axisScores["JP"]) * 0.8;
-    }
+    if (match.EI) score += match.EI === ei ? Math.abs(axisScores["EI"]) : -Math.abs(axisScores["EI"]);
+    if (match.SN) score += match.SN === sn ? Math.abs(axisScores["SN"]) : -Math.abs(axisScores["SN"]);
+    if (match.TF) score += match.TF === tf ? Math.abs(axisScores["TF"]) * 0.8 : -Math.abs(axisScores["TF"]) * 0.8;
+    if (match.JP) score += match.JP === jp ? Math.abs(axisScores["JP"]) * 0.8 : -Math.abs(axisScores["JP"]) * 0.8;
 
     if (score > bestScore) { bestScore = score; best = type; }
   }
@@ -398,6 +412,10 @@ export default function TestPage() {
     alert(`[${result.monster} — ${result.title}] ${name}님 응모 완료!`);
   };
 
+  // 잘 맞는/안 맞는 유형 이름 찾기
+  const compatibleNames = result.compatibleWith.map(id => RESIDENT_TYPES.find(r => r.id === id)?.monster ?? "");
+  const incompatibleNames = result.incompatibleWith.map(id => RESIDENT_TYPES.find(r => r.id === id)?.monster ?? "");
+
   return (
     <>
       <style>{`
@@ -421,6 +439,7 @@ export default function TestPage() {
         @keyframes popIn   { from { opacity:0; transform:scale(0.88) translateY(8px) } to { opacity:1; transform:scale(1) translateY(0) } }
         @keyframes blink   { 0%,49%{opacity:1} 50%,100%{opacity:0.2} }
         @keyframes shimmer { 0%{opacity:0.4} 50%{opacity:1} 100%{opacity:0.4} }
+        @keyframes slideUp { from { opacity:0; transform:translateY(18px) } to { opacity:1; transform:translateY(0) } }
 
         *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
         html, body { background: var(--bg); }
@@ -543,31 +562,102 @@ export default function TestPage() {
         }
         .slot-name.running { animation:blink 0.16s steps(1) infinite; }
 
+        /* ── 결과 카드 ── */
         .result-wrap {
           display:flex; flex-direction:column; align-items:center; text-align:center;
-          animation:fadeIn 0.65s ease; max-width:380px; width:100%; padding:0 1.4rem 3rem;
-        }
-        .result-monster {
-          font-family:var(--f-hand); font-size:58px; font-weight:700; color:var(--purple);
-          margin-bottom:0.2rem;
-        }
-        .result-title {
-          font-family:var(--f-sans); font-size:12px; font-weight:300;
-          color:#5a4880; letter-spacing:0.18em; margin-bottom:0.5rem;
-        }
-        .result-divider { width:24px; height:1px; background:#573c99; margin:0.5rem auto 0.9rem; }
-        .result-tagline {
-          font-family:var(--f-sans); font-size:17px; font-weight:400;
-          color:#8c5fee; margin-bottom:0.5rem;
-        }
-        .result-desc {
-          font-family:var(--f-sans); font-size:13px; font-weight:300;
-          color:var(--muted); line-height:2; margin-bottom:2rem;
+          animation:fadeIn 0.65s ease; max-width:400px; width:100%; padding:0 1.4rem 4rem;
         }
 
-        /* 축 표시 */
+        /* 이미지 */
+        .result-image-wrap {
+          width:300px; height:300px;
+          overflow:hidden; margin-bottom:1.4rem;
+          background:transparent;
+          animation:slideUp 0.5s ease 0.1s both;
+        }
+        .result-image-wrap img {
+          width:100%; height:100%; object-fit:cover;
+        }
+        .result-image-placeholder {
+          width:100%; height:100%; display:flex; align-items:center; justify-content:center;
+          font-size:52px;
+        }
+
+        .result-monster {
+          font-family:var(--f-hand); font-size:48px; font-weight:700; color:var(--purple);
+          margin-bottom:0.15rem;
+          animation:slideUp 0.5s ease 0.15s both;
+        }
+        .result-title {
+          font-family:var(--f-sans); font-size:11px; font-weight:300;
+          color:#5a4880; letter-spacing:0.2em; margin-bottom:0.6rem;
+          animation:slideUp 0.5s ease 0.2s both;
+        }
+        .result-divider { width:24px; height:1px; background:#573c99; margin:0.4rem auto 0.8rem; }
+        .result-tagline {
+          font-family:var(--f-sans); font-size:16px; font-weight:400;
+          color:#8c5fee; margin-bottom:1.4rem;
+          animation:slideUp 0.5s ease 0.25s both;
+        }
+
+        /* 분석 카드들 */
+        .result-cards {
+          display:flex; flex-direction:column; gap:10px;
+          width:100%; margin-bottom:1.6rem;
+          animation:slideUp 0.5s ease 0.3s both;
+        }
+        .result-card {
+          background:#0d0919; border:1px solid #2a1f4a; border-radius:12px;
+          padding:1rem 1.2rem; text-align:left;
+        }
+        .result-card-label {
+          font-family:var(--f-sans); font-size:9px; font-weight:500;
+          color:#4a3a72; letter-spacing:0.25em; margin-bottom:0.5rem;
+          text-transform:uppercase;
+        }
+        .result-card-text {
+          font-family:var(--f-sans); font-size:13px; font-weight:300;
+          color:var(--muted); line-height:1.9;
+        }
+        .result-card.desc  { border-color:#2d1f55; }
+        .result-card.strength .result-card-label { color:#3d6b3d; }
+        .result-card.strength { border-color:#1a3d1a; }
+        .result-card.strength .result-card-text { color:#6aab6a; }
+        .result-card.weakness .result-card-label { color:#6b3d3d; }
+        .result-card.weakness { border-color:#3d1a1a; }
+        .result-card.weakness .result-card-text { color:#ab6a6a; }
+        .result-card.tip .result-card-label { color:#4a6b6b; }
+        .result-card.tip { border-color:#1a3d3d; }
+        .result-card.tip .result-card-text { color:#6aabab; }
+
+        /* 궁합 */
+        .compat-wrap {
+          width:100%; display:flex; gap:10px; margin-bottom:1.8rem;
+          animation:slideUp 0.5s ease 0.35s both;
+        }
+        .compat-box {
+          flex:1; background:#0d0919; border-radius:12px; padding:0.9rem 1rem;
+          text-align:center;
+        }
+        .compat-box.good  { border:1px solid #1a3d1a; }
+        .compat-box.bad   { border:1px solid #3d1a1a; }
+        .compat-box-label {
+          font-family:var(--f-sans); font-size:9px; font-weight:500;
+          letter-spacing:0.2em; margin-bottom:0.5rem; text-transform:uppercase;
+        }
+        .compat-box.good .compat-box-label { color:#3d6b3d; }
+        .compat-box.bad  .compat-box-label { color:#6b3d3d; }
+        .compat-names {
+          font-family:var(--f-hand); font-size:15px; font-weight:700;
+          line-height:1.7;
+        }
+        .compat-box.good .compat-names { color:#6aab6a; }
+        .compat-box.bad  .compat-names { color:#ab6a6a; }
+
+        /* 축 */
         .axis-row {
           display:flex; gap:8px; margin-bottom:1.8rem; flex-wrap:wrap; justify-content:center;
+          animation:slideUp 0.5s ease 0.4s both;
         }
         .axis-chip {
           font-family:var(--f-sans); font-size:11px; font-weight:500;
@@ -575,7 +665,11 @@ export default function TestPage() {
           padding:3px 10px; color:#7c5fee; letter-spacing:0.08em;
         }
 
-        .result-form { display:flex; flex-direction:column; gap:8px; width:100%; margin-bottom:0.8rem; }
+        /* 폼 */
+        .result-form {
+          display:flex; flex-direction:column; gap:8px; width:100%; margin-bottom:0.8rem;
+          animation:slideUp 0.5s ease 0.45s both;
+        }
         .result-input {
           font-family:var(--f-sans); font-size:13px; font-weight:300;
           background:var(--surface); border:1px solid #5939b0; border-radius:8px;
@@ -662,17 +756,51 @@ export default function TestPage() {
               </>
             ) : (
               <div className="result-wrap">
+
                 <p className="result-monster">{result.monster}</p>
                 <p className="result-title">{result.title}</p>
-                <div className="result-divider" />
-                <p className="result-tagline">{result.tagline}</p>
-                <p className="result-desc">{result.desc}</p>
-                <div className="axis-row">
-                  <span className="axis-chip">{axisScores.EI >= 0 ? "E" : "I"}</span>
-                  <span className="axis-chip">{axisScores.SN >= 0 ? "S" : "N"}</span>
-                  <span className="axis-chip">{axisScores.TF >= 0 ? "T" : "F"}</span>
-                  <span className="axis-chip">{axisScores.JP >= 0 ? "J" : "P"}</span>
+                {/* 이미지 */}
+                <div className="result-image-wrap">
+                  {result.image
+                    ? <img src={result.image} alt={result.monster} />
+                    : <div className="result-image-placeholder">🌙</div>
+                  }
                 </div>
+                <div className="result-divider" />
+
+                {/* 분석 카드 */}
+                <div className="result-cards">
+                  <div className="result-card desc">
+                    <p className="result-card-label">유형 분석</p>
+                    <p className="result-card-text">{result.desc}</p>
+                  </div>
+                  <div className="result-card strength">
+                    <p className="result-card-label">✦ 강점</p>
+                    <p className="result-card-text">{result.strength}</p>
+                  </div>
+                  <div className="result-card weakness">
+                    <p className="result-card-label">▲ 주의</p>
+                    <p className="result-card-text">{result.weakness}</p>
+                  </div>
+                  <div className="result-card tip">
+                    <p className="result-card-label">◎ 한마디</p>
+                    <p className="result-card-text">{result.tip}</p>
+                  </div>
+                </div>
+
+                {/* 궁합 */}
+                <div className="compat-wrap">
+                  <div className="compat-box good">
+                    <p className="compat-box-label">잘 맞는 이웃</p>
+                    <p className="compat-names">{compatibleNames.join("\n")}</p>
+                  </div>
+                  <div className="compat-box bad">
+                    <p className="compat-box-label">조심할 이웃</p>
+                    <p className="compat-names">{incompatibleNames.join("\n")}</p>
+                  </div>
+                </div>
+
+                {/* 폼 */}
                 <div className="result-form">
                   <input className="result-input" type="text" placeholder="이름"
                     value={name} onChange={e => setName(e.target.value)} />
