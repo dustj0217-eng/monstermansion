@@ -1,171 +1,297 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 
-// ── 데이터 ────────────────────────────────────────────────
-const QUESTIONS = [
+// ── 타입 정의 ─────────────────────────────────────────────
+// 4축: E/I, S/N, T/F, J/P
+// 양수 = 앞 글자(E, S, T, J), 음수 = 뒷 글자(I, N, F, P)
+type Axis = "EI" | "SN" | "TF" | "JP";
+interface ScoreEntry { axis: Axis; value: number; }
+
+// ── 8가지 입주민 유형 ─────────────────────────────────────
+// MBTI 4축 기반으로 매핑
+// EI: E>0, I<0 / SN: S>0, N<0 / TF: T>0, F<0 / JP: J>0, P<0
+interface ResidentType {
+  id: number;
+  monster: string;
+  title: string;
+  tagline: string;
+  desc: string;
+  // 매핑 조건: 각 축의 방향
+  match: { EI: "E" | "I"; SN: "S" | "N"; TF?: "T" | "F"; JP?: "J" | "P" };
+}
+
+const RESIDENT_TYPES: ResidentType[] = [
   {
-    text: "맨션에 처음 도착한 밤, 엘리베이터가 멈췄다. 당신은?",
-    color: "#8b5cf6",
-    choices: [
-      { text: "비상 버튼을 눌러 관리자를 호출한다", types: [1, 3] },
-      { text: "옆 사람에게 말을 걸며 상황을 파악한다", types: [2, 7] },
-      { text: "조용히 기다리며 혼자 해결책을 생각한다", types: [5, 4] },
-      { text: "이미 예상했다는 듯 여분의 손전등을 꺼낸다", types: [6, 1] },
-    ],
+    id: 1,
+    monster: "밴시",
+    title: "새벽의 집주인",
+    tagline: "소리 없이 모든 걸 꿰뚫는 자",
+    desc: "혼자 있는 시간이 길고, 루틴이 확실하고, 공간에 애착이 강한 사람. 말이 없어 보이지만 사실 맨션에서 제일 많이 알고 있어. 신뢰가 쌓이면 전혀 다른 사람이 나타나.",
+    match: { EI: "I", SN: "S", JP: "J" },
   },
   {
-    text: "복도에서 낯선 입주민이 내 택배를 들고 있다. 어떻게 하나?",
-    color: "#06b6d4",
-    choices: [
-      { text: "정중하지만 단호하게 내 거라고 말한다", types: [1, 8] },
-      { text: "웃으며 말을 걸어 자연스럽게 되찾는다", types: [2, 3] },
-      { text: "그냥 두고 관리자에게 신고한다", types: [6, 1] },
-      { text: "상대방의 표정을 읽으며 상황을 먼저 판단한다", types: [4, 5] },
-    ],
+    id: 2,
+    monster: "셀키",
+    title: "열린 문의 이웃",
+    tagline: "바다처럼 품는 자",
+    desc: "언제 와도 반겨주는 타입. 집에 사람 부르는 걸 좋아하고, 관계가 넓고 따뜻해. 맨션의 온도를 올리는 존재. 곁에 있으면 이상하게 마음이 놓여.",
+    match: { EI: "E", SN: "S", TF: "F" },
   },
   {
-    text: "매달 열리는 입주민 회의, 당신의 자리는?",
-    color: "#f59e0b",
-    choices: [
-      { text: "앞자리에서 의제를 직접 제안하고 진행한다", types: [3, 8] },
-      { text: "옆 사람과 자유롭게 의견을 나눈다", types: [7, 2] },
-      { text: "뒷자리에서 조용히 듣고 노트에 메모한다", types: [5, 1] },
-      { text: "갈지 말지 문 앞에서 5분 고민한다", types: [9, 4] },
-    ],
+    id: 3,
+    monster: "픽시",
+    title: "복도의 탐험가",
+    tagline: "반짝이는 걸 놓치지 않는 자",
+    desc: "항상 뭔가 새로운 걸 시도하고 있어. 계획보다 즉흥, 혼자보다 함께. 어디서 뭘 하는지 모르지만 에너지는 제일 강해. 목표가 생기면 눈이 달라져.",
+    match: { EI: "E", SN: "N", JP: "P" },
   },
   {
-    text: "한밤중에 위층에서 이상한 소리가 들린다.",
-    color: "#10b981",
-    choices: [
-      { text: "직접 올라가 정중하게 항의한다", types: [1, 8] },
-      { text: "관리자에게 바로 연락한다", types: [6, 3] },
-      { text: "이어폰을 끼고 내 할 일을 계속한다", types: [5, 9] },
-      { text: "혹시 무슨 일인지 걱정되어 잠을 못 이룬다", types: [2, 6] },
-    ],
+    id: 4,
+    monster: "뱀파이어",
+    title: "밤의 단골손님",
+    tagline: "밤을 수집하는 자",
+    desc: "낮엔 거의 없다가 밤에 활성화되는 타입. 혼자만의 세계가 있고, 취미나 작업에 몰입하는 시간이 길어. 감정의 결이 남들보다 촘촘하고, 알고 보면 깊은 사람.",
+    match: { EI: "I", SN: "N", TF: "F" },
   },
   {
-    text: "맨션 파티에 초대받았다. 오늘 당신의 기분은?",
-    color: "#f43f5e",
-    choices: [
-      { text: "좋아, 새로운 사람들을 만날 절호의 기회", types: [3, 7] },
-      { text: "설레지만 무슨 옷을 입을지 고민이 태산", types: [4, 2] },
-      { text: "갈 생각이지만 조용히 구석에 있을 것 같다", types: [5, 9] },
-      { text: "혹시 몰라 미리 퇴로를 계획해 둔다", types: [6, 1] },
-    ],
+    id: 5,
+    monster: "고블린",
+    title: "조용한 관찰자",
+    tagline: "아무도 모르게 다 알고 있는 자",
+    desc: "많이 보고 적게 말해. 맨션 안에서 일어나는 일을 제일 잘 파악하고 있지만 먼저 나서진 않아. 관찰하고, 기록하고, 기억해. 가장 정확한 사람.",
+    match: { EI: "I", SN: "N", JP: "J" },
   },
   {
-    text: "맨션 지하에 비밀 공간이 있다는 소문이 돌고 있다.",
-    color: "#6366f1",
-    choices: [
-      { text: "직접 확인하러 바로 내려간다", types: [7, 8] },
-      { text: "소문의 진원지를 추적해 사실을 확인한다", types: [1, 5] },
-      { text: "알면서도 모른 척 지켜본다", types: [9, 4] },
-      { text: "관련자들을 모아 공식 조사를 제안한다", types: [3, 6] },
-    ],
+    id: 6,
+    monster: "유령",
+    title: "계획형 세입자",
+    tagline: "아무도 모르게 존재하는 자",
+    desc: "일정이 빡빡하고 목표가 명확해. 맨션은 충전 공간. 효율적이고 깔끔하게 살고, 관계도 선택적으로 깊게. 있는 듯 없는 듯, 하지만 사라지면 가장 먼저 티가 나.",
+    match: { EI: "I", SN: "S", JP: "P" },
   },
   {
-    text: "같은 층 이웃이 갑자기 이사를 간다. 당신은?",
-    color: "#a855f7",
-    choices: [
-      { text: "아쉽지만 담담하게 인사만 한다", types: [9, 5] },
-      { text: "작별 파티를 열어주거나 선물을 준비한다", types: [2, 7] },
-      { text: "혹시 내가 뭔가 불편하게 한 건 아닌지 생각한다", types: [4, 6] },
-      { text: "새 이웃이 어떤 사람일지 기대된다", types: [3, 7] },
-    ],
+    id: 7,
+    monster: "웨어울프",
+    title: "흘러가는 사람",
+    tagline: "보름달을 기다리는 자",
+    desc: "루틴보다 흐름. 오늘 뭐 할지 오늘 정해. 무겁지 않고 가볍게 지내는 걸 좋아하고, 억누를수록 더 강해져. 새로운 것 앞에서 가장 먼저 달려가는 사람.",
+    match: { EI: "E", SN: "S", JP: "P" },
   },
   {
-    text: "맨션에서 갑자기 정전이 발생했다. 당신의 첫 번째 행동은?",
-    color: "#3b82f6",
+    id: 8,
+    monster: "슬라임",
+    title: "맨션의 연결고리",
+    tagline: "어디에나 스며드는 자",
+    desc: "사람과 사람 사이를 잇는 존재. 갈등을 중재하고, 분위기를 읽고, 필요한 사람한테 필요한 말을 해줘. 없으면 균형이 무너지는, 맨션의 가장 중요한 입주민.",
+    match: { EI: "E", SN: "N", TF: "F" },
+  },
+];
+
+// ── 질문 데이터 ───────────────────────────────────────────
+interface Choice {
+  text: string;
+  scores: ScoreEntry[]; // 여러 축에 가중치 부여
+}
+interface Question {
+  text: string;
+  sub?: string;
+  choices: Choice[];
+}
+
+const QUESTIONS: Question[] = [
+  // ── Q1. 주거 선호 (컨텍스트, EI/SN 약하게)
+  {
+    text: "맨션을 고를 때 가장 중요하게 보는 환경은?",
     choices: [
-      { text: "손전등과 보조배터리를 꺼내 주변 사람을 돕는다", types: [2, 6] },
-      { text: "관리실로 가서 상황을 파악하고 공유한다", types: [3, 1] },
-      { text: "촛불을 켜고 혼자만의 시간을 즐긴다", types: [4, 5] },
-      { text: "이 기회에 평소 못 했던 일을 한다", types: [7, 8] },
+      { text: "카페, 식당, 편의시설이 가까운 번화가", scores: [{ axis: "EI", value: 1.5 }, { axis: "SN", value: 1 }] },
+      { text: "조용하고 한적한, 사람이 많지 않은 곳", scores: [{ axis: "EI", value: -2 }, { axis: "SN", value: -1 }] },
+      { text: "학교나 직장까지 가깝고 이동이 편한 곳", scores: [{ axis: "JP", value: 1.5 }, { axis: "SN", value: 1 }] },
+      { text: "가족과 함께 있을 수 있는 곳", scores: [{ axis: "TF", value: -1.5 }, { axis: "EI", value: -0.5 }] },
+    ],
+  },
+  // ── Q2. 통근 거리 (컨텍스트, JP/SN 약하게)
+  {
+    text: "집에서 주로 가는 곳까지 어느 정도 거리면 괜찮아요?",
+    choices: [
+      { text: "걸어서 갈 수 있으면 좋겠어", scores: [{ axis: "JP", value: 1 }, { axis: "SN", value: 1 }] },
+      { text: "30분 이내면 충분해", scores: [{ axis: "JP", value: 0.5 }, { axis: "EI", value: 0.5 }] },
+      { text: "1시간 정도는 감수할 수 있어", scores: [{ axis: "JP", value: -1 }, { axis: "TF", value: 1 }] },
+      { text: "거리보다 환경이 더 중요해", scores: [{ axis: "SN", value: -1.5 }, { axis: "TF", value: -1 }] },
+    ],
+  },
+  // ── Q3. 일/공부 방향성 (컨텍스트, TF/SN 약하게)
+  {
+    text: "입주민이 어떤 분야에서 활동하는지 궁금하네요. 지금 하는 일이나 공부, 본인이랑 얼마나 맞는 것 같아요?",
+    choices: [
+      { text: "딱 내 길 같아, 잘 맞아", scores: [{ axis: "TF", value: 1.5 }, { axis: "JP", value: 1 }] },
+      { text: "관련은 있는데 조금씩 다른 방향으로 가고 있어", scores: [{ axis: "SN", value: -1 }, { axis: "JP", value: -0.5 }] },
+      { text: "하고 싶은 걸 찾아가는 중이야", scores: [{ axis: "SN", value: -2 }, { axis: "JP", value: -1.5 }] },
+      { text: "지금 하는 것과 원래 원했던 것이 좀 달라", scores: [{ axis: "TF", value: -1 }, { axis: "SN", value: -1.5 }] },
+    ],
+  },
+  // ── Q4. 집에 머무는 시간 (컨텍스트, EI 중간)
+  {
+    text: "집주인 입장에서 여쭤볼게요. 하루 중 집에 있는 시간이 어느 정도예요?",
+    choices: [
+      { text: "거의 집에 있어, 집이 베이스야", scores: [{ axis: "EI", value: -2 }, { axis: "JP", value: 1 }] },
+      { text: "낮엔 나가고 저녁엔 들어오는 편", scores: [{ axis: "EI", value: 0.5 }, { axis: "SN", value: 1 }] },
+      { text: "집엔 자러만 와, 거의 밖에 있어", scores: [{ axis: "EI", value: 2.5 }, { axis: "JP", value: -1 }] },
+      { text: "날마다 달라, 딱 정해진 패턴이 없어", scores: [{ axis: "JP", value: -2 }, { axis: "SN", value: -1 }] },
+    ],
+  },
+  // ── Q5. 장기 부재 (컨텍스트, SN/JP 약하게)
+  {
+    text: "가까운 시일 내에 집을 오래 비워야 할 상황이 생길 것 같아요?",
+    choices: [
+      { text: "여행이나 해외 일정이 있어서 비울 수도 있어", scores: [{ axis: "SN", value: -1.5 }, { axis: "EI", value: 1 }] },
+      { text: "시험이나 프로젝트로 바빠지긴 해도 집은 지킬 것 같아", scores: [{ axis: "JP", value: 1.5 }, { axis: "TF", value: 1 }] },
+      { text: "군대나 복무 관련 일정이 있어", scores: [{ axis: "JP", value: 0.5 }, { axis: "TF", value: 0.5 }] },
+      { text: "딱히 없어, 당분간은 여기 머물 것 같아", scores: [{ axis: "SN", value: 1 }, { axis: "JP", value: 0.5 }] },
+    ],
+  },
+  // ── Q6. 집과 사람들 (컨텍스트, EI 중간)
+  {
+    text: "친구들이 집에 오는 편이에요?",
+    choices: [
+      { text: "자주 불러, 집에서 노는 걸 좋아해", scores: [{ axis: "EI", value: 2 }, { axis: "TF", value: -1.5 }] },
+      { text: "가끔은 오지만 주로 밖에서 만나", scores: [{ axis: "EI", value: 1 }, { axis: "SN", value: 0.5 }] },
+      { text: "거의 안 불러, 집은 혼자만의 공간이야", scores: [{ axis: "EI", value: -2.5 }, { axis: "JP", value: 1 }] },
+      { text: "오고 싶다면 오는데, 내가 먼저 부르진 않아", scores: [{ axis: "EI", value: -1 }, { axis: "TF", value: 0.5 }] },
+    ],
+  },
+  // ── Q7. 스트레스 (컨텍스트, TF/JP 중간)
+  {
+    text: "집에 있을 때 가장 불편한 상황은?",
+    choices: [
+      { text: "소음이나 냄새 등 환경적인 문제", scores: [{ axis: "SN", value: 1.5 }, { axis: "TF", value: 1 }] },
+      { text: "공간을 공유하거나 타인과 부딪힐 때", scores: [{ axis: "EI", value: -1.5 }, { axis: "TF", value: -1 }] },
+      { text: "혼자 있는 시간이 너무 길어질 때", scores: [{ axis: "EI", value: 1.5 }, { axis: "TF", value: -1.5 }] },
+      { text: "계획이 틀어지거나 예상 못 한 일이 생길 때", scores: [{ axis: "JP", value: 2 }, { axis: "TF", value: 1 }] },
+    ],
+  },
+  // ── Q8. 취미 (컨텍스트, EI/SN 약하게)
+  {
+    text: "집에서 쉴 때 주로 뭘 하면서 시간을 보내요?",
+    choices: [
+      { text: "유튜브, 넷플릭스 등 콘텐츠 보기", scores: [{ axis: "EI", value: -0.5 }, { axis: "SN", value: -0.5 }] },
+      { text: "게임, 독서, 그림 등 혼자 즐기는 취미", scores: [{ axis: "EI", value: -1.5 }, { axis: "SN", value: -1 }] },
+      { text: "운동이나 산책 등 몸 쓰는 것", scores: [{ axis: "SN", value: 1 }, { axis: "TF", value: 1 }] },
+      { text: "친구 만나거나 연락하면서 보내", scores: [{ axis: "EI", value: 2 }, { axis: "TF", value: -1 }] },
+    ],
+  },
+  // ── Q9. E/I (실질 감별)
+  {
+    text: "맨션에서 이웃들과 오래 어울리다가 방에 들어왔을 때 드는 첫 느낌은?",
+    choices: [
+      { text: "아직 아쉬워, 더 있을걸", scores: [{ axis: "EI", value: 3 }] },
+      { text: "좋았는데 이제 좀 쉬어야겠다", scores: [{ axis: "EI", value: -1.5 }, { axis: "TF", value: -0.5 }] },
+      { text: "솔직히 좀 지쳤어, 혼자가 편해", scores: [{ axis: "EI", value: -3 }] },
+      { text: "그때그때 달라, 사람이나 분위기에 따라", scores: [{ axis: "EI", value: -0.5 }, { axis: "SN", value: -0.5 }] },
+    ],
+  },
+  // ── Q10. S/N (실질 감별)
+  {
+    text: "새 입주민이 이사를 왔어요. 가장 먼저 뭐가 궁금해요?",
+    choices: [
+      { text: "이름이랑 어디서 왔는지 같은 기본적인 것", scores: [{ axis: "SN", value: 3 }, { axis: "TF", value: 0.5 }] },
+      { text: "무슨 일 하는지, 어떻게 지내는 사람인지", scores: [{ axis: "SN", value: 1.5 }, { axis: "TF", value: 1 }] },
+      { text: "어떤 사람인지, 무슨 생각을 하며 사는지", scores: [{ axis: "SN", value: -2.5 }, { axis: "TF", value: -1 }] },
+      { text: "왜 이 맨션을 골랐는지, 어떤 계기였는지", scores: [{ axis: "SN", value: -3 }, { axis: "EI", value: -0.5 }] },
+    ],
+  },
+  // ── Q11. T/F (실질 감별)
+  {
+    text: "같은 층 이웃이 복도에서 고민을 털어놨어요. 나는 주로?",
+    choices: [
+      { text: "상황을 파악하고 뭘 어떻게 하면 될지 같이 생각해줘", scores: [{ axis: "TF", value: 3 }, { axis: "SN", value: -0.5 }] },
+      { text: "일단 다 들어주고 맞장구부터 쳐", scores: [{ axis: "TF", value: -2.5 }, { axis: "EI", value: 0.5 }] },
+      { text: "솔직하게 내 생각을 말해줘, 그게 도움이 될 것 같아서", scores: [{ axis: "TF", value: 2 }, { axis: "EI", value: -0.5 }] },
+      { text: "그 사람이 뭘 원하는지부터 먼저 물어봐", scores: [{ axis: "TF", value: -1.5 }, { axis: "SN", value: -1 }] },
+    ],
+  },
+  // ── Q12. J/P (실질 감별)
+  {
+    text: "이번 주말에 맨션에서 하루가 통째로 비었어요. 나는?",
+    choices: [
+      { text: "뭘 할지 바로 정하고 준비해", scores: [{ axis: "JP", value: 3 }, { axis: "TF", value: 0.5 }] },
+      { text: "하고 싶은 것들을 머릿속으로 쭉 떠올려봐", scores: [{ axis: "JP", value: 1 }, { axis: "SN", value: -1 }] },
+      { text: "일어나봐야 알아, 그냥 흘러가는 대로", scores: [{ axis: "JP", value: -3 }] },
+      { text: "이웃한테 연락해서 같이 뭔가 하자고 해", scores: [{ axis: "JP", value: -1.5 }, { axis: "EI", value: 2 }] },
     ],
   },
 ];
 
-const TYPES: Record<number, { monster: string; tagline: string; desc: string }> = {
-  1: { monster: "밴시",        tagline: "소리 없이 모든 걸 꿰뚫는 자",    desc: "원칙에서 벗어난 것을 가장 먼저 감지합니다. 당신이 조용할수록, 주변은 긴장합니다." },
-  2: { monster: "셀키",        tagline: "바다처럼 품는 자",               desc: "곁에 있으면 이상하게 마음이 놓입니다. 누군가의 이름을 가장 먼저 기억하는 사람." },
-  3: { monster: "픽시",        tagline: "반짝이는 걸 놓치지 않는 자",     desc: "목표가 생기면 눈이 달라집니다. 맨션에서 가장 먼저 움직이는 사람." },
-  4: { monster: "뱀파이어",    tagline: "밤을 수집하는 자",               desc: "감정의 결이 남들보다 촘촘합니다. 아무도 모르는 맨션의 이면을 혼자 알고 있을지도." },
-  5: { monster: "고블린",      tagline: "아무도 모르게 다 알고 있는 자",   desc: "관찰하고, 기록하고, 기억합니다. 먼저 나서진 않지만 가장 정확합니다." },
-  6: { monster: "유령",        tagline: "아무도 모르게 존재하는 자",       desc: "있는 듯 없는 듯, 하지만 사라지면 가장 먼저 티가 납니다. 신뢰가 전부인 사람." },
-  7: { monster: "웨어울프",    tagline: "보름달을 기다리는 자",            desc: "억누를수록 더 강해집니다. 새로운 것 앞에서 가장 먼저 달려가는 사람." },
-  8: { monster: "프랑켄슈타인", tagline: "두려움을 모르는 자",             desc: "직접 부딪힙니다. 불합리한 걸 보면 가만있지 못하는, 맨션의 가장 솔직한 입주민." },
-  9: { monster: "슬라임",      tagline: "어디에나 스며드는 자",            desc: "갈등이 있는 곳에서 가장 먼저 다리를 놓습니다. 없으면 균형이 무너지는 존재." },
-};
+// ── 유형 매핑 로직 ────────────────────────────────────────
+function getResidentType(axisScores: Record<Axis, number>): ResidentType {
+  const ei = axisScores["EI"] >= 0 ? "E" : "I";
+  const sn = axisScores["SN"] >= 0 ? "S" : "N";
+  const tf = axisScores["TF"] >= 0 ? "T" : "F";
+  const jp = axisScores["JP"] >= 0 ? "J" : "P";
 
-const SLOT_NAMES = ["밴시","셀키","픽시","뱀파이어","고블린","유령","웨어울프","프랑켄슈타인","슬라임"];
-const BOTTLE_COLORS = ["#8b5cf6","#06b6d4","#f59e0b","#10b981","#f43f5e","#6366f1","#a855f7","#3b82f6"];
+  // 점수 기반으로 가장 잘 맞는 유형 찾기
+  let best = RESIDENT_TYPES[0];
+  let bestScore = -Infinity;
+
+  for (const type of RESIDENT_TYPES) {
+    let score = 0;
+    const { match } = type;
+
+    // EI, SN은 모든 유형에 필수
+    score += match.EI === ei ? Math.abs(axisScores["EI"]) : -Math.abs(axisScores["EI"]);
+    score += match.SN === sn ? Math.abs(axisScores["SN"]) : -Math.abs(axisScores["SN"]);
+
+    // TF, JP는 정의된 유형만 반영, 없으면 가중치 낮게
+    if (match.TF) {
+      score += match.TF === tf ? Math.abs(axisScores["TF"]) * 0.8 : -Math.abs(axisScores["TF"]) * 0.8;
+    }
+    if (match.JP) {
+      score += match.JP === jp ? Math.abs(axisScores["JP"]) * 0.8 : -Math.abs(axisScores["JP"]) * 0.8;
+    }
+
+    if (score > bestScore) { bestScore = score; best = type; }
+  }
+
+  return best;
+}
+
+// ── 상수 ─────────────────────────────────────────────────
+const BOTTLE_COLORS = ["#9b6dff", "#00c4e8", "#ff6b35", "#2ecc71", "#ff2d5e", "#4169e1", "#ff3ab8", "#ffd700", "#a8e063", "#ff8c42", "#7b68ee", "#20b2aa"];
+const BREW_INTERVALS = [60, 60, 70, 80, 95, 115, 140, 175, 220, 280, 360, 460, 590];
+const INIT_AXIS = (): Record<Axis, number> => ({ EI: 0, SN: 0, TF: 0, JP: 0 });
+const STAR_COLORS = ["#989898", "#585858", "#ffffff", "#e79f9f", "#d4b455", "#9b6dff"];
+const MONSTER_NAMES = RESIDENT_TYPES.map(t => t.monster);
 
 // ── 포션병 SVG ────────────────────────────────────────────
 function BottleSVG({ filled, color }: { filled: boolean; color: string }) {
-  const id = `clip${color.replace(/[^a-z0-9]/gi, "")}`;
+  const id = `clip${color.replace(/[^a-z0-9]/gi, "")}${Math.random().toString(36).slice(2, 5)}`;
   return (
-    <svg viewBox="0 0 60 90" width="54" height="81" xmlns="http://www.w3.org/2000/svg">
+    <svg viewBox="0 0 60 90" width="52" height="78" xmlns="http://www.w3.org/2000/svg">
       <defs>
         <clipPath id={id}>
           <path d="M10,40 Q8,44 8,52 Q8,73 30,75 Q52,73 52,52 Q52,44 50,40 Z" />
         </clipPath>
       </defs>
-
-      {/* 코르크 */}
       <rect x="23" y="15" width="14" height="11" rx="4" fill="#c8996a" />
       <rect x="25" y="17" width="10" height="7" rx="2" fill="#b8895a" />
       <rect x="27" y="18" width="6" height="1.5" rx="1" fill="#a07848" opacity="0.5" />
-
-      {/* 목 */}
-      <rect x="24" y="24" width="12" height="18" rx="2" fill={filled ? color : "#16102a"} opacity={filled ? 0.55 : 1} />
+      <rect x="24" y="24" width="12" height="18" rx="2" fill={filled ? color : "#403a54"} opacity={filled ? 0.55 : 1} />
       <rect x="25" y="24" width="4" height="18" rx="1" fill="white" opacity="0.04" />
-
-      {/* 바디 — 눈물방울형 */}
       <path
         d="M10,40 Q8,44 8,52 Q8,73 30,75 Q52,73 52,52 Q52,44 50,40 Z"
-        fill="#0c0818"
-        stroke={filled ? color : "#211640"}
-        strokeWidth="1.3"
+        fill="#0c0818" stroke={filled ? color : "#675a90"} strokeWidth="1.3"
         opacity={filled ? 0.95 : 0.85}
       />
-
-      {/* 액체 */}
-      {filled && (
-        <path
-          d="M10,54 Q20,51 30,54 Q40,57 50,54 L52,52 Q52,73 30,75 Q8,73 8,52 Z"
-          fill={color}
-          opacity="0.78"
-          clipPath={`url(#${id})`}
-        />
-      )}
-
-      {/* 액체 표면선 */}
-      {filled && (
-        <path
-          d="M12,54 Q21,51 30,54 Q39,57 48,54"
-          fill="none"
-          stroke={color}
-          strokeWidth="1.2"
-          opacity="0.45"
-        />
-      )}
-
-      {/* 기포 */}
       {filled && (
         <>
-          <circle cx="22" cy="62" r="2"   fill="white" opacity="0.1" />
-          <circle cx="38" cy="66" r="1.3" fill="white" opacity="0.08" />
-          <circle cx="30" cy="58" r="1.1" fill="white" opacity="0.09" />
+          <path
+            d="M10,54 Q20,51 30,54 Q40,57 50,54 L52,52 Q52,73 30,75 Q8,73 8,52 Z"
+            fill={color} opacity="0.78" clipPath={`url(#${id})`}
+          />
+          <circle cx="18" cy="60" r="2.5" fill={color} opacity="0.4" />
+          <circle cx="38" cy="65" r="1.8" fill={color} opacity="0.3" />
         </>
       )}
-
-      {/* 유리 반사 */}
-      <path d="M14,46 Q13,55 14,63" stroke="white" strokeWidth="2.5" strokeLinecap="round" opacity="0.055" fill="none" />
-      <path d="M17,44 Q16,49 17,54" stroke="white" strokeWidth="1.2" strokeLinecap="round" opacity="0.08" fill="none" />
-
-      {/* 라벨 */}
-      <rect x="17" y="52" width="26" height="14" rx="2.5" fill="none" stroke={filled ? color : "#2a1f45"} strokeWidth="0.7" opacity={filled ? 0.35 : 0.4} />
     </svg>
   );
 }
@@ -173,424 +299,298 @@ function BottleSVG({ filled, color }: { filled: boolean; color: string }) {
 // ── 별 캔버스 ─────────────────────────────────────────────
 function StarCanvas() {
   const ref = useRef<HTMLCanvasElement>(null);
-
   useEffect(() => {
-    const canvas = ref.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    const resize = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    };
-    resize();
-    window.addEventListener("resize", resize);
-
-    const COLORS = ["#989898", "#585858", "#ffffff", "#e79f9f", "#d4b455"];
-    const stars = Array.from({ length: 20 }, () => ({
-      x: Math.random() * canvas.width,
-      y: Math.random() * canvas.height,
-      r: Math.random() * 1.4 + 0.25,
-      color: COLORS[Math.floor(Math.random() * COLORS.length)],
+    const canvas = ref.current; if (!canvas) return;
+    const ctx = canvas.getContext("2d"); if (!ctx) return;
+    const resize = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; };
+    resize(); window.addEventListener("resize", resize);
+    const stars = Array.from({ length: 28 }, () => ({
+      x: Math.random() * window.innerWidth, y: Math.random() * window.innerHeight,
+      r: Math.random() * 1.5 + 0.2,
+      color: STAR_COLORS[Math.floor(Math.random() * STAR_COLORS.length)],
       on: Math.random() > 0.4,
-      onMs:  180 + Math.random() * 3200,
-      offMs:  60 + Math.random() * 5000,
-      timer: Math.random() * 1600,
+      onMs: 200 + Math.random() * 3000, offMs: 80 + Math.random() * 4500,
+      timer: Math.random() * 1800,
     }));
-
-    let last = performance.now();
-    let raf: number;
-
+    let last = performance.now(); let raf: number;
     const tick = (now: number) => {
-      const dt = now - last;
-      last = now;
+      const dt = now - last; last = now;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       for (const s of stars) {
         s.timer -= dt;
-        if (s.timer <= 0) {
-          s.on = !s.on;
-          s.timer = s.on ? s.onMs : s.offMs;
-        }
-        if (s.on) {
-          ctx.beginPath();
-          ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
-          ctx.fillStyle = s.color;
-          ctx.fill();
-        }
+        if (s.timer <= 0) { s.on = !s.on; s.timer = s.on ? s.onMs : s.offMs; }
+        if (s.on) { ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2); ctx.fillStyle = s.color; ctx.fill(); }
       }
       raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
-
-    return () => {
-      cancelAnimationFrame(raf);
-      window.removeEventListener("resize", resize);
-    };
+    return () => { cancelAnimationFrame(raf); window.removeEventListener("resize", resize); };
   }, []);
-
-  return (
-    <canvas
-      ref={ref}
-      style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0 }}
-    />
-  );
+  return <canvas ref={ref} style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0 }} />;
 }
 
-// ── 메인 컴포넌트 ─────────────────────────────────────────
+// ── 메인 ─────────────────────────────────────────────────
 type Screen = "main" | "question" | "brew";
 
 export default function TestPage() {
   const [mounted, setMounted] = useState(false);
-  const [screen, setScreen]   = useState<Screen>("main");
-  const [scores, setScores]   = useState<Record<number, number>>(
-    Object.fromEntries(Array.from({ length: 9 }, (_, i) => [i + 1, 0]))
-  );
-  const [filled, setFilled]         = useState<boolean[]>(new Array(8).fill(false));
-  const [activeQ, setActiveQ]       = useState(-1);
+  const [screen, setScreen] = useState<Screen>("main");
+  const [axisScores, setAxisScores] = useState<Record<Axis, number>>(INIT_AXIS());
+  const [filled, setFilled] = useState<boolean[]>(() => Array(QUESTIONS.length).fill(false));
+  const [activeQ, setActiveQ] = useState(-1);
   const [pickedChoice, setPickedChoice] = useState(-1);
-
-  const [slotRunning, setSlotRunning]   = useState(false);
-  const [slotName, setSlotName]         = useState("");
-  const [resultReady, setResultReady]   = useState(false);
-
-  const [name, setName]   = useState("");
+  const [slotRunning, setSlotRunning] = useState(false);
+  const [slotName, setSlotName] = useState("");
+  const [resultReady, setResultReady] = useState(false);
+  const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
 
-  useEffect(() => {
-    const t = setTimeout(() => setMounted(true), 60);
-    return () => clearTimeout(t);
-  }, []);
+  useEffect(() => { const t = setTimeout(() => setMounted(true), 60); return () => clearTimeout(t); }, []);
 
-  const topType = () =>
-    Number(Object.entries(scores).sort((a, b) => b[1] - a[1])[0][0]);
+  const result = useMemo(() => getResidentType(axisScores), [axisScores]);
+  const allFilled = filled.every(Boolean);
 
   const openQuestion = (idx: number) => {
     if (filled[idx]) return;
-    setActiveQ(idx);
-    setPickedChoice(-1);
-    setScreen("question");
+    setActiveQ(idx); setPickedChoice(-1); setScreen("question");
   };
 
   const pickChoice = (ci: number) => {
     if (pickedChoice !== -1) return;
     setPickedChoice(ci);
-    const types = QUESTIONS[activeQ].choices[ci].types;
-    setScores((prev) => {
+    const chosen = QUESTIONS[activeQ].choices[ci];
+    setAxisScores(prev => {
       const next = { ...prev };
-      types.forEach((t) => { next[t] = (next[t] || 0) + 1; });
+      for (const s of chosen.scores) next[s.axis] = (next[s.axis] || 0) + s.value;
       return next;
     });
     setTimeout(() => {
-      setFilled((prev) => {
-        const next = [...prev];
-        next[activeQ] = true;
-        return next;
-      });
+      setFilled(prev => { const n = [...prev]; n[activeQ] = true; return n; });
       setScreen("main");
-    }, 300);
+    }, 320);
   };
 
   const startBrew = () => {
-    setScreen("brew");
-    setSlotRunning(true);
-    setResultReady(false);
-
-    const finalName = TYPES[topType()].monster;
+    setScreen("brew"); setSlotRunning(true); setResultReady(false);
+    const finalName = result.monster;
     let i = 0;
-    // 빠르게 시작해서 점점 느려지다 탁 멈춤
-    const intervals = [70, 70, 80, 90, 110, 140, 180, 230, 300, 390, 500, 640];
     const run = (step: number) => {
-      if (step >= intervals.length) {
-        setSlotName(finalName);
-        setSlotRunning(false);
+      if (step >= BREW_INTERVALS.length) {
+        setSlotName(finalName); setSlotRunning(false);
         setTimeout(() => setResultReady(true), 500);
         return;
       }
-      setSlotName(SLOT_NAMES[i % SLOT_NAMES.length]);
-      i++;
-      setTimeout(() => run(step + 1), intervals[step]);
+      setSlotName(MONSTER_NAMES[i++ % MONSTER_NAMES.length]);
+      setTimeout(() => run(step + 1), BREW_INTERVALS[step]);
     };
     run(0);
   };
 
   const restartAll = () => {
-    setScores(Object.fromEntries(Array.from({ length: 9 }, (_, i) => [i + 1, 0])));
-    setFilled(new Array(8).fill(false));
-    setActiveQ(-1);
-    setPickedChoice(-1);
-    setSlotRunning(false);
-    setSlotName("");
-    setResultReady(false);
-    setName("");
-    setPhone("");
+    setAxisScores(INIT_AXIS()); setFilled(Array(QUESTIONS.length).fill(false));
+    setActiveQ(-1); setPickedChoice(-1); setSlotRunning(false);
+    setSlotName(""); setResultReady(false); setName(""); setPhone("");
     setScreen("main");
   };
 
   const handleSubmit = () => {
-    if (!name.trim() || !phone.trim()) {
-      alert("이름과 전화번호를 입력해주세요.");
-      return;
-    }
-    // TODO: API 연동
-    alert(`[${TYPES[topType()].monster}] ${name}님 응모 완료!`);
+    if (!name.trim() || !phone.trim()) { alert("이름과 전화번호를 입력해주세요."); return; }
+    alert(`[${result.monster} — ${result.title}] ${name}님 응모 완료!`);
   };
-
-  const allFilled = filled.every(Boolean);
 
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Gaegu:wght@400;700&family=Noto+Sans+KR:wght@300;400&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Gaegu:wght@400;700&family=Noto+Sans+KR:wght@300;400;500&display=swap');
 
-        @keyframes fadeIn {
-          from { opacity: 0; transform: translateY(10px); }
-          to   { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes popIn {
-          from { opacity: 0; transform: scale(0.9) translateY(6px); }
-          to   { opacity: 1; transform: scale(1) translateY(0); }
-        }
-        @keyframes blink {
-          0%, 49% { opacity: 1; }
-          50%, 100% { opacity: 0.25; }
+        :root {
+          --bg:       #07050e;
+          --fg:       #e2d9f3;
+          --purple:   #c4b5fd;
+          --purple-m: #8b51ff;
+          --purple-d: #6d28d9;
+          --muted:    #7454ba;
+          --dim:      #5b4d7a;
+          --surface:  #0d0919;
+          --border:   #3d2c6d;
+          --f-sans:   'Noto Sans KR', sans-serif;
+          --f-hand:   'Gaegu', cursive;
         }
 
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-        html, body { background: #08060f; }
+        @keyframes fadeIn  { from { opacity:0; transform:translateY(10px) } to { opacity:1; transform:translateY(0) } }
+        @keyframes popIn   { from { opacity:0; transform:scale(0.88) translateY(8px) } to { opacity:1; transform:scale(1) translateY(0) } }
+        @keyframes blink   { 0%,49%{opacity:1} 50%,100%{opacity:0.2} }
+        @keyframes shimmer { 0%{opacity:0.4} 50%{opacity:1} 100%{opacity:0.4} }
+
+        *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+        html, body { background: var(--bg); }
 
         .root {
-          background: #08060f;
-          min-height: 100vh;
-          color: #e2d9f3;
-          position: relative;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          opacity: 0;
-          transition: opacity 0.9s ease;
+          background: var(--bg); min-height: 100vh; color: var(--fg);
+          position: relative; display: flex; flex-direction: column; align-items: center;
+          opacity: 0; transition: opacity 0.9s ease;
         }
         .root.visible { opacity: 1; }
+        .screen { display:flex; flex-direction:column; align-items:center; width:100%; position:relative; z-index:1; }
 
-        .screen {
-          display: flex; flex-direction: column; align-items: center;
-          width: 100%; position: relative; z-index: 1;
+        .btn-reset { background:none; border:none; cursor:pointer; font-family:var(--f-sans); }
+        .btn-primary {
+          font-family: var(--f-hand); font-weight: 700;
+          background: var(--purple-d); color: #f0ebff;
+          border: none; border-radius: 12px; cursor: pointer;
+          letter-spacing: 0.04em;
+          transition: transform 0.15s, opacity 0.15s, box-shadow 0.15s;
         }
+        .btn-primary:hover  { transform:scale(1.03); box-shadow: 0 0 20px rgba(109,40,217,0.5); }
+        .btn-primary:active { transform:scale(0.97); opacity:0.85; }
 
-        /* ── MAIN ── */
+        /* ── 메인 ── */
         .main-wrap { padding: 3.5rem 1.5rem 3rem; }
-
         .main-title {
-          font-family: 'Gaegu', cursive;
-          font-size: 26px; font-weight: 700;
-          color: #c4b5fd;
-          text-align: center;
-          margin-bottom: 0.3rem;
+          font-family:var(--f-hand); font-size:38px; font-weight:700;
+          color:var(--purple); text-align:center; margin-bottom:0.4rem;
         }
-        .main-sub {
-          font-family: 'Noto Sans KR', sans-serif;
-          font-size: 11px; font-weight: 300;
-          color: #4a3d6b;
-          text-align: center;
-          letter-spacing: 0.18em;
-          margin-bottom: 3rem;
+        .main-subtitle {
+          font-family:var(--f-sans); font-size:13px; font-weight:300;
+          color:#7a60c0; text-align:center; letter-spacing:0.2em; margin-bottom:2.8rem;
         }
 
         .bottles-grid {
-          display: grid;
-          grid-template-columns: repeat(4, 1fr);
-          gap: 20px 4px;
-          max-width: 360px;
-          width: 100%;
-          margin-bottom: 2.5rem;
+          display:grid; grid-template-columns:repeat(4,1fr);
+          gap:36px 8px; max-width:380px; width:100%;
         }
-        @media (max-width: 340px) {
-          .bottles-grid { grid-template-columns: repeat(2, 1fr); }
-        }
+        @media(max-width:340px){ .bottles-grid{ grid-template-columns:repeat(2,1fr); } }
 
         .bottle-slot {
-          display: flex; flex-direction: column; align-items: center;
-          gap: 5px; cursor: pointer;
-          animation: popIn 0.45s ease both;
+          display:flex; flex-direction:column; align-items:center; gap:4px;
+          cursor:pointer; animation:popIn 0.45s ease both;
+          transition: opacity 0.2s;
         }
-        .bottle-slot.filled { cursor: default; }
-        .bottle-slot:not(.filled):active { opacity: 0.7; }
+        .bottle-slot.filled { cursor:default; }
+        .bottle-slot:not(.filled):active { opacity:0.65; }
 
-        .bottle-label {
-          font-family: 'Gaegu', cursive;
-          font-size: 13px;
-          color: #3d3057;
-          text-align: center;
-          transition: color 0.3s;
+        .bottle-num {
+          font-family:var(--f-hand); font-size:15px;
+          color:var(--purple-m); min-height:22px;
         }
-        .bottle-slot.filled .bottle-label { color: #9d7fe8; }
+        .bottle-done {
+          font-family:var(--f-sans); font-size:10px; font-weight:300;
+          color:#4a3d6b; letter-spacing:0.1em; min-height:22px;
+        }
+
+        .progress-bar-wrap { width:100%; max-width:320px; margin:1.6rem auto 0; }
+        .progress-bar-bg { background:#1a1030; border-radius:4px; height:3px; }
+        .progress-bar-fill {
+          height:3px; border-radius:4px; background:var(--purple-m);
+          transition:width 0.5s ease;
+        }
+        .progress-text {
+          font-family:var(--f-sans); font-size:10px; font-weight:300;
+          color:#4a3d6b; letter-spacing:0.15em; text-align:right; margin-top:6px;
+        }
 
         .brew-btn {
-          font-family: 'Gaegu', cursive;
-          font-size: 19px; font-weight: 700;
-          padding: 0.65rem 2.6rem;
-          background: #6d28d9;
-          color: #f0ebff;
-          border: none; border-radius: 14px;
-          cursor: pointer;
-          letter-spacing: 0.05em;
-          opacity: 0; pointer-events: none;
-          transition: opacity 0.6s ease, transform 0.15s;
+          font-size:18px; padding:0.65rem 2.6rem; border-radius:14px;
+          letter-spacing:0.05em; margin-top:2rem;
+          opacity:0; pointer-events:none;
+          transition:opacity 0.7s ease, transform 0.15s;
         }
-        .brew-btn.show { opacity: 1; pointer-events: all; }
-        .brew-btn:hover { transform: scale(1.04); }
-        .brew-btn:active { transform: scale(0.98); }
+        .brew-btn.show { opacity:1; pointer-events:all; }
 
-        /* ── QUESTION ── */
-        .q-wrap {
-          padding: 2.5rem 1.5rem 3rem;
-          max-width: 480px; width: 100%;
-          animation: fadeIn 0.35s ease;
+        /* ── 질문 ── */
+        .question-wrap {
+          padding:2.5rem 1.4rem 3rem; max-width:480px; width:100%;
+          animation:fadeIn 0.35s ease;
         }
         .q-back {
-          font-family: 'Noto Sans KR', sans-serif;
-          font-size: 12px; font-weight: 300;
-          color: #3d3057; background: none; border: none;
-          cursor: pointer; margin-bottom: 2rem;
-          display: block; letter-spacing: 0.05em;
+          font-size:11px; color:#3a2d52; letter-spacing:0.06em;
+          margin-bottom:1.8rem; display:block; font-weight:300;
         }
-        .q-back:hover { color: #7a6b96; }
-
-        .q-bottle-center {
-          display: flex; justify-content: center;
-          margin-bottom: 1.5rem;
-        }
+        .q-back:hover { color:#7a6b96; }
         .q-num {
-          font-family: 'Noto Sans KR', sans-serif;
-          font-size: 10px; font-weight: 300;
-          color: #5b4d7a; letter-spacing: 0.2em;
-          margin-bottom: 1rem; text-align: center;
+          font-family:var(--f-sans); font-size:10px; font-weight:300;
+          color:var(--dim); letter-spacing:0.22em; margin:1.4rem 0 0.8rem; text-align:center;
         }
         .q-text {
-          font-family: 'Gaegu', cursive;
-          font-size: 19px;
-          color: #ddd5f5;
-          line-height: 1.75;
-          text-align: center;
-          margin-bottom: 2.2rem;
+          font-family:var(--f-hand); font-size:22px;
+          color:#ddd5f5; line-height:1.8; text-align:center; margin-bottom:2rem;
         }
-        .choices { display: flex; flex-direction: column; gap: 9px; }
+        .choices { display:flex; flex-direction:column; gap:8px; }
         .choice {
-          font-family: 'Noto Sans KR', sans-serif;
-          font-size: 13px; font-weight: 300;
-          background: #0d0919;
-          border: 1px solid #1c1432;
-          border-radius: 10px;
-          padding: 0.9rem 1.1rem;
-          color: #6b5d8a;
-          cursor: pointer;
-          text-align: left;
-          line-height: 1.65;
-          transition: border-color 0.15s, color 0.15s, background 0.15s;
-          width: 100%;
+          font-family:var(--f-sans); font-size:14px; font-weight:300;
+          background:var(--surface); border:1px solid var(--border); border-radius:10px;
+          padding:0.85rem 1.1rem; color:#8a70c4; cursor:pointer;
+          text-align:left; line-height:1.7; width:100%;
+          transition:border-color 0.15s, color 0.15s, background 0.15s;
         }
-        .choice:hover  { border-color: #4a2e9e; color: #c4b5fd; background: #110e22; }
-        .choice.picked { border-color: #6d28d9; color: #c4b5fd; background: #110e22; }
+        .choice:hover, .choice.picked {
+          border-color:#7c3aed; color:var(--purple); background:#0f0b1e;
+        }
 
-        /* ── BREW / RESULT ── */
+        /* ── 제조/결과 ── */
         .brew-wrap {
-          display: flex; flex-direction: column; align-items: center;
-          justify-content: center;
-          min-height: 100vh;
-          padding: 2rem 1.5rem;
-          width: 100%;
+          display:flex; flex-direction:column; align-items:center;
+          justify-content:center; min-height:100vh; width:100%;
         }
-        .slot-hint {
-          font-family: 'Noto Sans KR', sans-serif;
-          font-size: 11px; font-weight: 300;
-          color: #4a3d6b; letter-spacing: 0.18em;
-          margin-bottom: 1.4rem;
+        .brew-label {
+          font-family:var(--f-sans); font-size:11px; font-weight:300;
+          color:#4a3d6b; letter-spacing:0.18em; margin-bottom:1.2rem; min-height:1em;
+          animation:shimmer 1.2s ease infinite;
         }
         .slot-name {
-          font-family: 'Gaegu', cursive;
-          font-size: 48px; font-weight: 700;
-          color: #c4b5fd;
-          min-height: 60px;
-          text-align: center;
+          font-family:var(--f-hand); font-size:52px; font-weight:700;
+          color:var(--purple); min-height:64px; text-align:center;
         }
-        .slot-name.running {
-          animation: blink 0.18s steps(1) infinite;
-        }
+        .slot-name.running { animation:blink 0.16s steps(1) infinite; }
 
-        .result-section {
-          display: flex; flex-direction: column; align-items: center;
-          text-align: center;
-          animation: fadeIn 0.65s ease;
-          max-width: 380px; width: 100%;
-          padding: 0 1.5rem;
+        .result-wrap {
+          display:flex; flex-direction:column; align-items:center; text-align:center;
+          animation:fadeIn 0.65s ease; max-width:380px; width:100%; padding:0 1.4rem 3rem;
         }
         .result-monster {
-          font-family: 'Gaegu', cursive;
-          font-size: 50px; font-weight: 700;
-          color: #c4b5fd;
-          margin-bottom: 0.5rem;
+          font-family:var(--f-hand); font-size:58px; font-weight:700; color:var(--purple);
+          margin-bottom:0.2rem;
         }
-        .result-divider {
-          width: 28px; height: 1px;
-          background: #2a1f45;
-          margin: 0.6rem auto 1rem;
+        .result-title {
+          font-family:var(--f-sans); font-size:12px; font-weight:300;
+          color:#5a4880; letter-spacing:0.18em; margin-bottom:0.5rem;
         }
+        .result-divider { width:24px; height:1px; background:#573c99; margin:0.5rem auto 0.9rem; }
         .result-tagline {
-          font-family: 'Noto Sans KR', sans-serif;
-          font-size: 12px; font-weight: 300;
-          color: #6b5d8a;
-          letter-spacing: 0.14em;
-          margin-bottom: 1.4rem;
+          font-family:var(--f-sans); font-size:17px; font-weight:400;
+          color:#8c5fee; margin-bottom:0.5rem;
         }
         .result-desc {
-          font-family: 'Noto Sans KR', sans-serif;
-          font-size: 13px; font-weight: 300;
-          color: #5b4d7a;
-          line-height: 1.95;
-          margin-bottom: 2.2rem;
+          font-family:var(--f-sans); font-size:13px; font-weight:300;
+          color:var(--muted); line-height:2; margin-bottom:2rem;
         }
-        .result-form {
-          display: flex; flex-direction: column; gap: 9px;
-          width: 100%; margin-bottom: 0.9rem;
+
+        /* 축 표시 */
+        .axis-row {
+          display:flex; gap:8px; margin-bottom:1.8rem; flex-wrap:wrap; justify-content:center;
         }
+        .axis-chip {
+          font-family:var(--f-sans); font-size:11px; font-weight:500;
+          background:#1a1030; border:1px solid #3d2c6d; border-radius:20px;
+          padding:3px 10px; color:#7c5fee; letter-spacing:0.08em;
+        }
+
+        .result-form { display:flex; flex-direction:column; gap:8px; width:100%; margin-bottom:0.8rem; }
         .result-input {
-          font-family: 'Noto Sans KR', sans-serif;
-          font-size: 13px; font-weight: 300;
-          background: #0d0919;
-          border: 1px solid #1c1432;
-          border-radius: 8px;
-          padding: 0.75rem 1rem;
-          color: #e2d9f3;
-          outline: none;
-          transition: border-color 0.15s;
-          width: 100%;
+          font-family:var(--f-sans); font-size:13px; font-weight:300;
+          background:var(--surface); border:1px solid #5939b0; border-radius:8px;
+          padding:0.75rem 1rem; color:var(--fg); outline:none;
+          transition:border-color 0.15s; width:100%;
         }
-        .result-input::placeholder { color: #32264d; }
-        .result-input:focus { border-color: #5b3fa0; }
+        .result-input::placeholder { color:#7c5fc2; }
+        .result-input:focus { border-color:#7c3aed; }
 
-        .submit-btn {
-          font-family: 'Gaegu', cursive;
-          font-size: 18px; font-weight: 700;
-          padding: 0.75rem;
-          background: #6d28d9;
-          color: #f0ebff;
-          border: none; border-radius: 10px;
-          cursor: pointer;
-          letter-spacing: 0.04em;
-          transition: transform 0.15s, opacity 0.15s;
-          width: 100%;
-        }
-        .submit-btn:hover  { transform: scale(1.03); }
-        .submit-btn:active { transform: scale(0.98); opacity: 0.85; }
-
+        .submit-btn  { font-size:22px; padding:0.75rem; width:100%; border-radius:12px; }
         .restart-btn {
-          font-family: 'Noto Sans KR', sans-serif;
-          font-size: 11px; font-weight: 300;
-          color: #32264d; background: none; border: none;
-          cursor: pointer; text-decoration: underline;
-          letter-spacing: 0.05em; margin-top: 0.6rem;
+          font-size:11px; color:#2e2245; text-decoration:underline;
+          letter-spacing:0.05em; margin-top:0.6rem; font-weight:300;
         }
-        .restart-btn:hover { color: #6b5d8a; }
+        .restart-btn:hover { color:#6b5d8a; }
       `}</style>
 
       <div className={`root ${mounted ? "visible" : ""}`}>
@@ -599,27 +599,31 @@ export default function TestPage() {
         {/* ── 메인 ── */}
         {screen === "main" && (
           <div className="screen main-wrap">
-            <div className="main-title">입주민 유형 테스트</div>
-            <div className="main-sub">포션병을 모두 채워보세요</div>
-
+            <h3 className="main-title">입주민 유형 테스트</h3>
+            <p className="main-subtitle">당신은 어떤 입주민인가요?</p>
             <div className="bottles-grid">
-              {QUESTIONS.map((q, i) => (
+              {QUESTIONS.map((_, i) => (
                 <div
                   key={i}
                   className={`bottle-slot ${filled[i] ? "filled" : ""}`}
-                  style={{ animationDelay: `${i * 0.055}s` }}
+                  style={{ animationDelay: `${i * 0.05}s` }}
                   onClick={() => openQuestion(i)}
                 >
-                  <BottleSVG filled={filled[i]} color={BOTTLE_COLORS[i]} />
-                  <div className="bottle-label">{filled[i] ? "완료" : `${i + 1}`}</div>
+                  <BottleSVG filled={filled[i]} color={BOTTLE_COLORS[i % BOTTLE_COLORS.length]} />
+                  {filled[i]
+                    ? <span className="bottle-done">완료</span>
+                    : <span className="bottle-num">{i + 1}</span>
+                  }
                 </div>
               ))}
             </div>
-
-            <button
-              className={`brew-btn ${allFilled ? "show" : ""}`}
-              onClick={startBrew}
-            >
+            <div className="progress-bar-wrap">
+              <div className="progress-bar-bg">
+                <div className="progress-bar-fill" style={{ width: `${(filled.filter(Boolean).length / QUESTIONS.length) * 100}%` }} />
+              </div>
+              <p className="progress-text">{filled.filter(Boolean).length} / {QUESTIONS.length}</p>
+            </div>
+            <button className={`btn-primary brew-btn ${allFilled ? "show" : ""}`} onClick={startBrew}>
               물약 제조하기
             </button>
           </div>
@@ -628,13 +632,11 @@ export default function TestPage() {
         {/* ── 질문 ── */}
         {screen === "question" && activeQ !== -1 && (
           <div className="screen">
-            <div className="q-wrap">
-              <button className="q-back" onClick={() => setScreen("main")}>← 돌아가기</button>
-              <div className="q-bottle-center">
-                <BottleSVG filled={false} color={BOTTLE_COLORS[activeQ]} />
-              </div>
-              <div className="q-num">질문 {activeQ + 1} / {QUESTIONS.length}</div>
-              <div className="q-text">{QUESTIONS[activeQ].text}</div>
+            <div className="question-wrap">
+              <button className="btn-reset q-back" onClick={() => setScreen("main")}>← 돌아가기</button>
+              <BottleSVG filled={false} color={BOTTLE_COLORS[activeQ % BOTTLE_COLORS.length]} />
+              <p className="q-num">질문 {activeQ + 1} / {QUESTIONS.length}</p>
+              <p className="q-text">{QUESTIONS[activeQ].text}</p>
               <div className="choices">
                 {QUESTIONS[activeQ].choices.map((c, ci) => (
                   <button
@@ -650,42 +652,35 @@ export default function TestPage() {
           </div>
         )}
 
-        {/* ── 제조 / 결과 ── */}
+        {/* ── 제조/결과 ── */}
         {screen === "brew" && (
           <div className="screen brew-wrap">
             {!resultReady ? (
               <>
-                <div className="slot-hint">
-                  {slotRunning ? "유형을 감별하는 중..." : ""}
-                </div>
-                <div className={`slot-name ${slotRunning ? "running" : ""}`}>
-                  {slotName}
-                </div>
+                <p className="brew-label">{slotRunning ? "유형을 감별하는 중..." : ""}</p>
+                <p className={`slot-name ${slotRunning ? "running" : ""}`}>{slotName}</p>
               </>
             ) : (
-              <div className="result-section">
-                <div className="result-monster">{TYPES[topType()].monster}</div>
+              <div className="result-wrap">
+                <p className="result-monster">{result.monster}</p>
+                <p className="result-title">{result.title}</p>
                 <div className="result-divider" />
-                <div className="result-tagline">{TYPES[topType()].tagline}</div>
-                <div className="result-desc">{TYPES[topType()].desc}</div>
-                <div className="result-form">
-                  <input
-                    className="result-input"
-                    type="text"
-                    placeholder="이름"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                  />
-                  <input
-                    className="result-input"
-                    type="tel"
-                    placeholder="전화번호"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                  />
-                  <button className="submit-btn" onClick={handleSubmit}>응모하기</button>
+                <p className="result-tagline">{result.tagline}</p>
+                <p className="result-desc">{result.desc}</p>
+                <div className="axis-row">
+                  <span className="axis-chip">{axisScores.EI >= 0 ? "E" : "I"}</span>
+                  <span className="axis-chip">{axisScores.SN >= 0 ? "S" : "N"}</span>
+                  <span className="axis-chip">{axisScores.TF >= 0 ? "T" : "F"}</span>
+                  <span className="axis-chip">{axisScores.JP >= 0 ? "J" : "P"}</span>
                 </div>
-                <button className="restart-btn" onClick={restartAll}>처음부터 다시하기</button>
+                <div className="result-form">
+                  <input className="result-input" type="text" placeholder="이름"
+                    value={name} onChange={e => setName(e.target.value)} />
+                  <input className="result-input" type="tel" placeholder="전화번호"
+                    value={phone} onChange={e => setPhone(e.target.value)} />
+                  <button className="btn-primary submit-btn" onClick={handleSubmit}>응모하기</button>
+                </div>
+                <button className="btn-reset restart-btn" onClick={restartAll}>처음부터 다시하기</button>
               </div>
             )}
           </div>

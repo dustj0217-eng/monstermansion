@@ -7,13 +7,6 @@ import { CHARACTERS, Character, ROOMS, ROOM_COLORS } from "../lib/characters";
 
 type Filter = "all" | "1" | "2" | "3" | "4";
 
-const silhouetteSVG = (
-  <svg viewBox="0 0 60 80" width="65%" style={{ opacity: 0.13 }}>
-    <ellipse cx="30" cy="20" rx="13" ry="13" fill="white" />
-    <path d="M6 80 Q6 48 30 48 Q54 48 54 80Z" fill="white" />
-  </svg>
-);
-
 export default function CharactersPage() {
   const [ready, setReady] = useState(false);
   const [filter, setFilter] = useState<Filter>("all");
@@ -185,18 +178,13 @@ export default function CharactersPage() {
                   letterSpacing: "1.5px",
                   padding: "6px 14px",
                   borderRadius: 20,
-                  border: `1px solid ${
-                    filter === f
-                      ? "rgba(160,120,255,0.6)"
-                      : "rgba(255,255,255,0.1)"
-                  }`,
                   background:
                     filter === f
-                      ? "rgba(160,120,255,0.14)"
+                      ? "rgba(200,170,255,1)"
                       : "transparent",
                   color:
                     filter === f
-                      ? "rgba(200,170,255,1)"
+                      ? "rgb(0, 0, 0)"
                       : "rgba(255,255,255,0.35)",
                   cursor: "pointer",
                   fontFamily: "'DM Sans', sans-serif",
@@ -354,9 +342,9 @@ function CharacterCard({
       <div
         style={{
           width: "100%",
-          aspectRatio: "3/4",
+          aspectRatio: "1",
           position: "relative",
-          background: `linear-gradient(160deg, ${colors.glow}, rgba(8,5,15,0.7))`,
+          background: "rgba(0,0,0)",
           display: "flex",
           alignItems: "flex-end",
           justifyContent: "center",
@@ -378,17 +366,6 @@ function CharacterCard({
             </svg>
           </div>
         )}
-        {/* Bottom fade */}
-        <div
-          style={{
-            position: "absolute",
-            inset: 0,
-            bottom: 0,
-            height: "55%",
-            background: "linear-gradient(to top, #08050f, transparent)",
-            top: "auto",
-          }}
-        />
       </div>
 
       {/* Text */}
@@ -408,7 +385,6 @@ function CharacterCard({
         <div
           style={{
             fontSize: 10,
-            letterSpacing: "1.5px",
             textTransform: "uppercase",
             color: colors.accent,
             opacity: 0.85,
@@ -523,20 +499,6 @@ function CharacterModal({
 }) {
   return (
     <>
-      {/* Dim overlay */}
-      <div
-        onClick={onClose}
-        style={{
-          position: "fixed",
-          inset: 0,
-          zIndex: 50,
-          background: "rgba(4,2,12,0.75)",
-          backdropFilter: "blur(6px)",
-          WebkitBackdropFilter: "blur(6px)",
-          cursor: "pointer",
-        }}
-      />
-
       {/* Centered modal card */}
       <div
         style={{
@@ -596,37 +558,17 @@ function CharacterModal({
               </div>
             )}
 
-            {/* Gradient fade bottom */}
-            <div
-              style={{
-                position: "absolute",
-                inset: "auto 0 0 0",
-                height: "50%",
-                background: "linear-gradient(to top, rgba(11,6,24,1), transparent)",
-              }}
-            />
-
             {/* Close button */}
             <button
               onClick={onClose}
               style={{
                 position: "absolute",
-                top: 14,
-                right: 14,
-                width: 30,
-                height: 30,
+                top: 14, right: 14,
+                width: 30, height: 30,
                 borderRadius: "50%",
-                background: "rgba(0,0,0,0.45)",
-                border: "1px solid rgba(255,255,255,0.12)",
-                color: "rgba(255,255,255,0.7)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
+                background: "rgba(0,0,0,0.45)", color: "rgba(255,255,255)",
                 cursor: "pointer",
                 fontSize: 14,
-                lineHeight: 1,
-                outline: "none",
-                zIndex: 2,
               }}
             >
               ✕
@@ -636,14 +578,11 @@ function CharacterModal({
             <div
               style={{
                 position: "absolute",
-                top: 14,
-                left: 14,
+                top: 14,left: 14,
                 fontSize: 10,
-                letterSpacing: "2px",
+                borderRadius: 10,
                 padding: "3px 9px",
-                borderRadius: 4,
                 background: colors.glow,
-                border: `1px solid ${colors.accent}55`,
                 color: colors.accent,
                 fontFamily: "'DM Sans', sans-serif",
                 zIndex: 2,
@@ -656,142 +595,67 @@ function CharacterModal({
             <div
               style={{
                 position: "absolute",
-                bottom: 0,
-                left: 0,
-                right: 0,
-                padding: "0 20px 18px",
-                zIndex: 2,
+                bottom: 0,left: 0,right: 0,
+                padding: "0 20px 0px",
               }}
             >
               <div
                 style={{
-                  fontFamily: "'DM Serif Display', serif",
                   fontSize: 28,
-                  lineHeight: 1.05,
                   color: "#fff",
-                  fontWeight: 400,
-                  letterSpacing: "-0.3px",
-                  marginBottom: 2,
                 }}
               >
                 {char.name}
               </div>
-              {char.nameEn && (
+              {char.species && (
                 <div
                   style={{
-                    fontSize: 11,
+                    fontSize: 13,
                     color: "rgba(255,255,255,0.35)",
-                    fontFamily: "'DM Sans', sans-serif",
                     fontStyle: "italic",
                   }}
                 >
-                  {char.nameEn}
+                  {char.species}
                 </div>
               )}
             </div>
           </div>
 
           {/* Info body */}
-          <div style={{ padding: "20px 20px 28px" }}>
-
-            {/* Stats row */}
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "1fr 1fr",
-                gap: 10,
-                marginBottom: 20,
-              }}
-            >
-              {[
-                { label: "SPECIES", value: char.species },
-                { label: "AGE", value: char.age },
-              ].map((item) => (
-                <div
-                  key={item.label}
-                  style={{
-                    background: "rgba(255,255,255,0.035)",
-                    border: "1px solid rgba(255,255,255,0.07)",
-                    borderRadius: 10,
-                    padding: "10px 13px",
-                  }}
-                >
-                  <div
-                    style={{
-                      fontSize: 9,
-                      letterSpacing: "2px",
-                      color: "rgba(255,255,255,0.28)",
-                      textTransform: "uppercase",
-                      marginBottom: 4,
-                      fontFamily: "'DM Sans', sans-serif",
-                    }}
-                  >
-                    {item.label}
-                  </div>
-                  <div
-                    style={{
-                      fontSize: 14,
-                      color: "#fff",
-                      fontFamily: "'DM Sans', sans-serif",
-                      fontWeight: 400,
-                    }}
-                  >
-                    {item.value}
-                  </div>
-                </div>
-              ))}
-            </div>
-
+          <div style={{ padding: "5px 20px 28px" }}>
             {/* Divider */}
             <div
               style={{
                 height: 1,
                 background: "rgba(255,255,255,0.06)",
-                marginBottom: 18,
+                marginBottom: 10,
               }}
             />
 
             {/* Bio */}
-            <div style={{ marginBottom: 18 }}>
-              <div
-                style={{
-                  fontSize: 9,
-                  letterSpacing: "2.5px",
-                  color: "rgba(255,255,255,0.28)",
-                  textTransform: "uppercase",
-                  marginBottom: 8,
-                  fontFamily: "'DM Sans', sans-serif",
-                }}
-              >
-                About
-              </div>
-              <p
-                style={{
-                  fontSize: 14,
-                  lineHeight: 1.75,
-                  color: "rgba(255,255,255,0.68)",
-                  margin: 0,
-                  fontFamily: "'DM Sans', sans-serif",
-                  fontWeight: 300,
-                }}
-              >
-                {char.bio}
-              </p>
-            </div>
+            <p
+              style={{
+                fontSize: 14,
+                color: "rgba(255,255,255,0.8)",
+                fontFamily: "'DM Sans', sans-serif",
+                padding: "0 0 15px 0",
+              }}
+            >
+              {char.bio}
+            </p>
 
             {/* Fatal flaw */}
             <div
               style={{
                 borderRadius: 10,
                 padding: "13px 15px",
-                background: `linear-gradient(135deg, ${colors.glow}, rgba(8,5,15,0.4))`,
-                border: `1px solid ${colors.accent}33`,
+                background: colors.glow,
               }}
             >
               <div
                 style={{
                   fontSize: 9,
-                  letterSpacing: "2.5px",
+                  letterSpacing: "1.5px",
                   textTransform: "uppercase",
                   color: colors.accent,
                   opacity: 0.75,

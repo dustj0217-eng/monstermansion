@@ -32,71 +32,73 @@ export const ROOM_COLORS: Record<string, { accent: string; glow: string }> = {
 
 // ── 캐릭터 데이터 ─────────────────────────────────
 export const CHARACTERS: Record<string, Character> = {
+  // 101호
+  // 102호
+  horus: {
+    id: "horus",
+    name: "호루스",
+    nameEn: "Horus",
+    room: "102",
+    species: "mummy",
+    age: "3200",
+    flaw: "신분제가 더는 아니라는 걸 잘 이해하지 못한다. 다른 입주민과 마주치면 싸울지도...?",
+    bio: "고대 이집트의 파라오였다고 주장하는 붕대 차림의 미라. 옛 권력과 부를 되찾고 싶어하지만, 일단은 맨션 입주민으로 지내는 중.",
+  },
+  // 201호
+  demon: {
+    id: "horus",
+    name: "호루스",
+    nameEn: "Horus",
+    room: "201",
+    species: "mummy",
+    age: "3200",
+    flaw: "신분제가 더는 아니라는 걸 잘 이해하지 못한다. 다른 입주민과 마주치면 싸울지도...?",
+    bio: "고대 이집트의 파라오였다고 주장하는 붕대 차림의 미라. 옛 권력과 부를 되찾고 싶어하지만, 일단은 맨션 입주민으로 지내는 중.",
+  },
+  // 202호
   // 301호
-  dracula: {
-    id: "dracula",
-    name: "드라큘라",
-    nameEn: "Dracula",
+  dra: {
+    id: "dra",
+    name: "드라",
+    nameEn: "Dra",
     room: "301",
     species: "뱀파이어",
-    age: "587",
-    flaw: "낮에는 절대 못 일어남 — 오전 약속은 존재하지 않는다",
-    bio: "수백 년 된 귀족 뱀파이어. 품위 있어 보이지만 월세를 자꾸 잊는다.",
-    image: "/images/characters/dracula.png",
+    age: "35",
+    flaw: "새벽에 나가서 밤에 들어와, 얼굴 보기가 힘들다.",
+    bio: "카페인 중독 직장인 뱀파이어. 햇빛과 마늘에 약하고, 과로로 항상 피로하다. 맨션에서 10분 거리인 웰컴 컴퍼니에서 일하고 있기에, 맨션에 입주하게 되었다.",
+    image: "/images/characters/dra.png",
   },
-  wolf: {
-    id: "wolf",
-    name: "울프",
-    nameEn: "Wolf",
+  may: {
+    id: "may",
+    name: "메이",
+    nameEn: "May",
     room: "301",
-    species: "늑대인간",
-    age: "28",
-    flaw: "보름달이 뜨면 이성 0% — 맨션 가구 파손 주범",
-    bio: "평소엔 과묵하고 신사적. 단 한 달에 한 번, 전혀 다른 존재가 된다.",
-  },
-  mummy: {
-    id: "mummy",
-    name: "미라",
-    nameEn: "Mummy",
-    room: "301",
-    species: "미라",
-    age: "3200",
-    flaw: "붕대가 계속 풀림 — 복도에 흘린 붕대는 항상 미라 것",
-    bio: "고대 이집트 왕족 출신. 현대 문명에 적응 중이나 진도가 느리다.",
-  },
-  // 302호
-  hazel: {
-    id: "hazel",
-    name: "헤이젤",
-    nameEn: "Hazel",
-    room: "302",
     species: "마녀",
-    age: "22",
-    flaw: "실험 마법이 자꾸 폭발함 — 302호 천장은 항상 그을려 있다",
-    bio: "마법학교 수석 졸업. 이론은 완벽하지만 실전에서 꼭 뭔가 터진다.",
-    image: "/images/characters/hazel.png",
+    age: "20",
+    flaw: "마법약 실험 도중 폭발 사고를 일으킬 수 있음.",
+    bio: "올해 갓 대학교에 입학하는 새내기 견습마녀! 꿈은 언니처럼 나만의 포션공방 차리기! 잘 부탁드려요!",
+    image: "/images/characters/may.png",
   },
-  witch: {
-    id: "witch",
-    name: "모르가나",
-    nameEn: "Morgana",
-    room: "302",
-    species: "고대 마녀",
-    age: "불명",
-    flaw: "저주를 너무 가볍게 씀 — 화나면 일단 저주부터",
-    bio: "헤이젤의 룸메이트이자 멘토. 수천 년의 내공을 가졌지만 성격이 문제.",
+  gosti: {
+    id: "gosti",
+    name: "고스티",
+    nameEn: "Gosti",
+    room: "301",
+    species: "유령",
+    age: "19",
+    flaw: "어디든 통과해 다닐 수 있다. 잘못하면 사생활 침해가 될지도...?",
+    bio: "학교에서는 존재감 제일 없는 뒷자리 남학생, 집에서는 식탁보 뒤집어쓰고 사는 고3 수험생 유령.",
   },
-  // 나머지 호실 캐릭터는 추가 예정
 };
 
 // ── 호실 목록 ─────────────────────────────────────
 export const ROOMS: Room[] = [
-  { number: "101", floor: 1, characters: [] },
-  { number: "102", floor: 1, characters: [], vacant: true, vacantLabel: "입주 협의 중" },
+  { number: "101", floor: 1, characters: [], vacant: true, vacantLabel: "입주 협의 중" },
+  { number: "102", floor: 1, characters: ["horus"] },
   { number: "201", floor: 2, characters: [], vacant: true, vacantLabel: "곧 누군가 이사 옵니다" },
   { number: "202", floor: 2, characters: [] },
-  { number: "301", floor: 3, characters: ["dracula", "wolf", "mummy"] },
-  { number: "302", floor: 3, characters: ["hazel", "witch"] },
+  { number: "301", floor: 3, characters: ["dra", "may", "gosti"] },
+  { number: "302", floor: 3, characters: [] },
   { number: "401", floor: 4, characters: [], vacant: true },
   { number: "402", floor: 4, characters: [] },
 ];
