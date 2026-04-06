@@ -357,6 +357,7 @@ function CharacterCard({
             alt={char.name}
             fill
             style={{ objectFit: "cover", objectPosition: "top" }}
+            sizes="100vw"
           />
         ) : (
           <div style={{ marginBottom: 12 }}>

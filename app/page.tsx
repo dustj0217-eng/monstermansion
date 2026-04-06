@@ -9,7 +9,7 @@ const SPOTS = [
   { label: "도시 지도",      style: { left: "13%", top: "90%" },  href: "/map" },
   { label: "SNS 팔로우",     style: { right: "15%", top: "25%" }, href: "/follow" },
   { label: "맨션 입장",      style: { left: "46%", top: "80%" },  href: "/lobby", isDoor: true },
-  { label: "게임사 홈페이지", style: { left: "29%", top: "39%" },  href: "https://studiof-ten.vercel.app/" },
+  { label: "게임사 홈페이지", style: { left: "29%", top: "39%" },  href: "https://studioforge.site/" },
   { label: "입주민 테스트", style: { left: "15%", top: "12%" },  href: "/test" },
 ] as const;
 
