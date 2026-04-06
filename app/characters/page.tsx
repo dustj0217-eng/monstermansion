@@ -429,7 +429,7 @@ function VacantCard({
         borderRadius: 14,
         padding: "16px 18px",
         border: "1px dashed rgba(255,255,255,0.08)",
-        background: "rgba(255,255,255,0.015)",
+        background: "rgba(241, 224, 224, 0.01)",
         display: "flex",
         alignItems: "center",
         gap: 14,
