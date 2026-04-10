@@ -5,9 +5,9 @@ import Link from "next/link";
 import NavBar from "../components/NavBar";
 
 const SPOTS = [
-  { label: "캐릭터",     sub: "입주민 정보",  style: { left: "44%",  top: "26%" }, href: "/characters?room=301" },
-  { label: "스토리",    sub: "맨션 에피소드",     style: { left: "17%",  top: "37%" }, href: "/story" },
-  { label: "맨션 소개", sub: "입주 정보",         style: { left: "70%",  top: "58%" }, href: "/about" },
+  { label: "캐릭터",     sub: "입주민 정보",  style: { left: "32%",  top: "25%" }, href: "/characters?room=301" },
+  { label: "스토리",    sub: "맨션 에피소드",     style: { left: "10%",  top: "37%" }, href: "/story" },
+  { label: "맨션 소개", sub: "입주 정보",         style: { left: "70%",  top: "40%" }, href: "/about" },
 ] as const;
 
 type DoorPhase = "opening" | "done";

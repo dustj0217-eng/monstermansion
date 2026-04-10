@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useMemo } from "react";
 import NavBar from "../components/NavBar";
+import Link from "next/link";
 
 // ── 색상 토큰 ─────────────────────────────────────────────
 const C = {
@@ -176,7 +177,7 @@ const QUESTIONS: Question[] = [
     ],
   },
   {
-    text: "맨션에 새로운 규칙이 생겼다. 이때 나의 반응은?",
+    text: "맨션에 새로운 규칙이 생겼습니다. 이때 나의 반응은?",
     choices: [
       { text: "일단 따르긴 하는데, 루틴에 맞출 수 있을 때만", scores: [{ character: "zombie", value: 2 }, { character: "vampire", value: 1 }] },
       { text: "왜 바꿔? 원래 방식이 더 좋은데", scores: [{ character: "mummy", value: 2 }, { character: "ghost", value: 1 }] },
@@ -205,12 +206,12 @@ function getResidentType(scores: Partial<Record<CharacterId, number>>): Resident
 // ── 별 배경 ───────────────────────────────────────────────
 function StarField() {
   const stars = useMemo(() => (
-    Array.from({ length: 70 }, (_, i) => ({
+    Array.from({ length: 20 }, (_, i) => ({
       id: i,
       x: Math.random() * 100,
       y: Math.random() * 100,
       size: Math.random() * 1.8 + 0.5,
-      delay: Math.random() * 4,
+      delay: Math.random() * 10,
       duration: Math.random() * 3 + 2,
     }))
   ), []);
@@ -415,9 +416,17 @@ export default function TestPage() {
 
           {allFilled && (
             <button onClick={startBrew}
-              className="font-jua text-lg px-10 py-3 rounded-2xl mt-6 active:scale-95 transition-all"
-              style={{ background: C.cta, color: C.text }}>
-              물약 제조하기
+              className="font-jua"
+              style={{
+                fontSize: 18,
+                padding: "16px 0", width: "100%", maxWidth: 280,
+                borderRadius: 18, border: `2px solid ${C.cta}`,
+                background: "transparent", color: C.accent,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                marginTop: 24,
+                cursor: "pointer", transition: "all 0.2s",
+              }}>
+              ✦ 물약 제조하기 ✦
             </button>
           )}
         </div>
@@ -449,10 +458,9 @@ export default function TestPage() {
                 style={{
                   backgroundColor: pickedChoice === ci ? "#4c1d95" : C.text,
                   border: `2px solid ${pickedChoice === ci ? "#4c1d95" : C.text}`,
-                  color: pickedChoice === ci ? "#ffffff" : "#000000",
+                  color: pickedChoice === ci ? C.text : "#000000",
                   padding: "14px 24px",
-                  borderRadius: 30,
-                  width: "100%",
+                  borderRadius: 30, width: "100%",
                   fontWeight: pickedChoice === ci ? 500 : 400,
                 }}>
                 {c.text}
@@ -467,18 +475,12 @@ export default function TestPage() {
               className="font-jua"
               style={{
                 fontSize: 18,
-                padding: "10px 6px",
-                width: "100%",
-                borderRadius: 30,
-                border: "none",
-                background: confirmed ? "#3b1f6e" : C.cta,
-                color: C.text,
+                padding: "10px 6px", width: "100%",
+                borderRadius: 30, border: "none",
+                background: confirmed ? "#3b1f6e" : C.cta, color: C.text,
                 opacity: confirmed ? 0.6 : 1,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: 10,
-                marginTop: 16,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                gap: 10, marginTop: 16,
                 transition: "all 0.2s",
                 cursor: confirmed ? "default" : "pointer",
               }}
@@ -506,8 +508,13 @@ export default function TestPage() {
         <div className="relative z-10 flex flex-col items-center justify-center min-h-screen w-full px-6 pb-12">
           {!resultReady ? (
             <div className="flex flex-col items-center gap-4">
-              <p className="font-noto text-xs tracking-widest animate-pulse" style={{ color: C.accentB }}>
-                {slotRunning ? "유형을 감별하는 중..." : ""}
+              <img
+                src="/images/test.png"
+                alt="slot"
+                className="w-50 h-50 object-contain"
+              />
+              <p className="font-noto tracking-widest animate-pulse" style={{ color: C.accentB }}>
+                {slotRunning ? "변신 물약 제조 중..." : ""}
               </p>
               <p className={`font-jua text-5xl text-center ${slotRunning ? "animate-pulse" : ""}`}
                 style={{ color: C.text }}>
@@ -641,9 +648,29 @@ export default function TestPage() {
               </div>
 
               <button onClick={restartAll} className="font-noto font-normal"
-                style={{ color: C.textMut, fontSize: 12, textDecoration: "underline", marginBottom: 40 }}>
+                style={{ color: C.textMut, fontSize: 12, textDecoration: "underline", marginBottom: 10 }}>
                 처음부터 다시하기
               </button>
+
+              {/* 다른 유형 보기 버튼 */}
+              <Link href="/test/types"
+                className="font-noto text-sm tracking-widest"
+                style={{
+                  color: C.accentB,
+                  textDecoration: "none",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 6,
+                  padding: "14px 0",
+                  width: "100%",
+                  maxWidth: 280,
+                  borderRadius: 18,
+                  border: `1.5px solid ${C.border}`,
+                  marginBottom: 16,
+                }}>
+                다른 입주민 유형 보러가기
+              </Link>
             </div>
           )}
         </div>
