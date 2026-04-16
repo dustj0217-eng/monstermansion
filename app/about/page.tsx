@@ -85,7 +85,23 @@ export default function MonsterMansionPage() {
               alt="Monster Mansion 입주민 캐릭터들"
               className="chars-img"
             />
-            <p className="chars-caption">뱀파이어, 메두사, 미라, 마녀, 좀비… 개성 넘치는 입주민들이 기다리고 있어요.</p>
+            <p className="chars-caption">
+              뱀파이어, 메두사, 미라, 마녀, 좀비… 개성 넘치는 입주민들이 기다리고 있어요.</p>
+
+            <img
+              src="/images/게임 화면.jpg"
+              alt="Monster Mansion 게임 화면"
+              className="game-img"
+            />
+            <p className="chars-caption">
+              <br />집을 잘 꾸며서 광고하고 입주민을 받아 맨션을 경영할 수 있습니다.</p>
+            <img
+              src="/images/게임 화면2.jpg"
+              alt="Monster Mansion 게임 화면2"
+              className="game2-img"
+            />
+            <p className="chars-caption">
+              <br />여러 캐릭터들을 만나고, 흥미로운 스토리를 탐색해 보세요.</p>
 
             <div className="features">
               <div className="feature">
@@ -175,6 +191,14 @@ export default function MonsterMansionPage() {
               ))}
             </div>
             <p className="dev-note">현재 캐릭터 아트 &amp; 빌딩 작업 중 · 개발 블로그 준비 중</p>
+            <img
+              src="/images/초기 낙서.jpg"
+              alt="초기 낙서"
+              className="drawing-img"
+              style={{padding: "30px 0 0 0"}}
+            />
+            <p className="chars-caption">
+              <br />캐릭터 아트 초기 시안 예시</p>
           </div>
         </section>
 
